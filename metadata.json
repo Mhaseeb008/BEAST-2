@@ -1,0 +1,6 @@
+{
+  "name": "BeastMC Network - Official Minecraft Server & Store",
+  "description": "Join BeastMC Network for survival, skyblock, and minigames. Explore ranks, coins, live server status, manual payment checkout, and player order tracking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
