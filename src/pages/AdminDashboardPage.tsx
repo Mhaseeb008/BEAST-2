@@ -11,6 +11,7 @@ import {
   SeasonSettings,
   RankComparisonFeature,
   RankFeatureValue,
+  VoteSite,
 } from '../types.ts';
 import {
   LayoutDashboard,
@@ -64,6 +65,7 @@ import {
   ChevronDown,
   ChevronUp,
   Megaphone,
+  Vote,
 } from 'lucide-react';
 import {
   DatePreset,
@@ -93,6 +95,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
     | 'payments'
     | 'mc-server'
     | 'settings'
+    | 'vote-links'
     | 'season-settings'
     | 'users'
     | 'emails'
@@ -247,6 +250,14 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   const [resetPasswordModalData, setResetPasswordModalData] = useState<{ email: string; tempPassword: string } | null>(null);
   const [tempPasswordCopied, setTempPasswordCopied] = useState<boolean>(false);
 
+  // Vote Sites / Links Manager
+  const [voteSitesList, setVoteSitesList] = useState<VoteSite[]>([]);
+  const [loadingVoteSites, setLoadingVoteSites] = useState<boolean>(false);
+  const [editingVoteSite, setEditingVoteSite] = useState<Partial<VoteSite> | null>(null);
+  const [voteSiteModalOpen, setVoteSiteModalOpen] = useState<boolean>(false);
+  const [voteSiteToDelete, setVoteSiteToDelete] = useState<VoteSite | null>(null);
+  const [savingVoteSite, setSavingVoteSite] = useState<boolean>(false);
+
   // Emails & Audit
   const [sentEmailsList, setSentEmailsList] = useState<SentEmail[]>([]);
   const [previewEmail, setPreviewEmail] = useState<SentEmail | null>(null);
@@ -372,6 +383,23 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
     }
   };
 
+  const fetchVoteSites = async () => {
+    if (!token) return;
+    try {
+      setLoadingVoteSites(true);
+      const res = await fetch('/api/admin/vote-sites', {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setVoteSitesList(await res.json());
+      }
+    } catch (err) {
+      console.warn('Could not fetch vote sites in admin:', err);
+    } finally {
+      setLoadingVoteSites(false);
+    }
+  };
+
   const fetchUsers = async () => {
     if (!token) return;
     try {
@@ -424,13 +452,16 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
   const fetchLiveMcStatus = async (showLoading = false) => {
     if (showLoading) setLoadingLiveStatus(true);
     try {
-      const res = await fetch('/api/mc-status');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch('/api/mc-status', { signal: controller.signal });
+      clearTimeout(timeoutId);
       if (res.ok) {
         const data = await res.json();
         setLiveMcStatus(data);
       }
     } catch (err) {
-      console.error('Failed to fetch live MC status:', err);
+      console.warn('Dashboard live MC status poll skipped:', err);
     } finally {
       if (showLoading) {
         setTimeout(() => setLoadingLiveStatus(false), 500);
@@ -451,6 +482,7 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
     fetchOrders();
     fetchProducts();
     fetchPaymentMethods();
+    fetchVoteSites();
     fetchUsers();
     fetchEmailsAndAudit();
   }, [token]);
@@ -936,6 +968,133 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
     }
   };
 
+  // Vote Site Actions
+  const handleOpenCreateVoteSite = () => {
+    const nextOrder = voteSitesList.length > 0 ? Math.max(...voteSitesList.map((s) => s.sortOrder || 0)) + 1 : 1;
+    setEditingVoteSite({
+      name: '',
+      url: '',
+      description: '',
+      rewardText: '500 Beast Coins + 1x Vote Crate Key',
+      sortOrder: nextOrder,
+      isActive: 1,
+    });
+    setVoteSiteModalOpen(true);
+  };
+
+  const handleOpenEditVoteSite = (site: VoteSite) => {
+    setEditingVoteSite({ ...site });
+    setVoteSiteModalOpen(true);
+  };
+
+  const handleSaveVoteSite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!token || !editingVoteSite) return;
+
+    if (!editingVoteSite.name?.trim() || !editingVoteSite.url?.trim()) {
+      showNotification('Vote Site Name and URL are required.', true);
+      return;
+    }
+
+    setSavingVoteSite(true);
+    try {
+      const isNew = !editingVoteSite.id;
+      const url = isNew ? '/api/admin/vote-sites' : `/api/admin/vote-sites/${editingVoteSite.id}`;
+      const method = isNew ? 'POST' : 'PUT';
+
+      const res = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(editingVoteSite),
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      showNotification(isNew ? `Vote site "${data.name}" added successfully!` : `Vote site "${data.name}" updated!`);
+      setVoteSiteModalOpen(false);
+      setEditingVoteSite(null);
+      fetchVoteSites();
+    } catch (err: any) {
+      showNotification(err.message, true);
+    } finally {
+      setSavingVoteSite(false);
+    }
+  };
+
+  const handleDeleteVoteSite = async () => {
+    if (!token || !voteSiteToDelete) return;
+    try {
+      const res = await fetch(`/api/admin/vote-sites/${voteSiteToDelete.id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error('Failed to delete vote site');
+      showNotification(`Deleted vote site "${voteSiteToDelete.name}"`);
+      setVoteSiteToDelete(null);
+      fetchVoteSites();
+    } catch (err: any) {
+      showNotification(err.message, true);
+    }
+  };
+
+  const handleToggleVoteSiteActive = async (site: VoteSite) => {
+    if (!token) return;
+    const nextActive = site.isActive === 1 ? 0 : 1;
+    try {
+      const res = await fetch(`/api/admin/vote-sites/${site.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ isActive: nextActive }),
+      });
+      if (!res.ok) throw new Error('Failed to toggle status');
+      showNotification(nextActive === 1 ? `"${site.name}" enabled (Live)` : `"${site.name}" disabled (Hidden)`);
+      fetchVoteSites();
+    } catch (err: any) {
+      showNotification(err.message, true);
+    }
+  };
+
+  const handleMoveVoteSite = async (index: number, direction: 'up' | 'down') => {
+    if (!token) return;
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= voteSitesList.length) return;
+
+    const newList = [...voteSitesList];
+    const [moved] = newList.splice(index, 1);
+    newList.splice(targetIndex, 0, moved);
+
+    const itemsToUpdate = newList.map((site, i) => ({
+      id: site.id,
+      sortOrder: i + 1,
+    }));
+
+    setVoteSitesList(newList.map((site, i) => ({ ...site, sortOrder: i + 1 })));
+
+    try {
+      const res = await fetch('/api/admin/vote-sites-reorder', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ items: itemsToUpdate }),
+      });
+      if (!res.ok) throw new Error('Failed to update sort order');
+      showNotification('Vote links order updated!');
+      fetchVoteSites();
+    } catch (err: any) {
+      showNotification(err.message, true);
+      fetchVoteSites();
+    }
+  };
+
   // Settings Save
   const handleSaveSettings = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1353,6 +1512,25 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
         >
           <Settings className="w-4 h-4" />
           <span>Site & Branding</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('vote-links')}
+          className={`px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 transition-all ${
+            activeTab === 'vote-links'
+              ? 'bg-amber-500 text-slate-950 shadow-md'
+              : 'text-slate-400 hover:text-white hover:bg-slate-900'
+          }`}
+        >
+          <Vote className="w-4 h-4" />
+          <span>Vote Links</span>
+          {voteSitesList.length > 0 && (
+            <span className={`px-1.5 py-0.2 rounded-full text-[10px] font-mono ${
+              activeTab === 'vote-links' ? 'bg-slate-950 text-amber-400' : 'bg-slate-800 text-slate-300'
+            }`}>
+              {voteSitesList.length}
+            </span>
+          )}
         </button>
 
         <button
@@ -3791,7 +3969,402 @@ export const AdminDashboardPage: React.FC<AdminDashboardPageProps> = ({
       </div>
       )}
 
-      {/* TAB: MINECRAFT SERVER SETTINGS (OWNER DASHBOARD) */}
+      {/* TAB: VOTE LINKS & MINECRAFT DIRECTORIES (OWNER / ADMIN) */}
+      {activeTab === 'vote-links' && (
+        <div className="space-y-6">
+          {/* Header Banner */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-4 shadow-xl">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 text-xs font-bold uppercase tracking-wider border border-amber-500/20">
+                  <Vote className="w-3.5 h-3.5" />
+                  <span>Minecraft Server Listings & Rewards</span>
+                </div>
+                <h2 className="text-2xl font-black text-white uppercase tracking-tight">
+                  Vote Links Manager
+                </h2>
+                <p className="text-xs text-slate-400 max-w-2xl leading-relaxed">
+                  Manage all external Minecraft server voting sites listed on the public <span className="text-emerald-400 font-mono">/vote</span> page. Authorized admins can add new websites, edit links, reorder positions, and toggle visibility.
+                </p>
+              </div>
+
+              <button
+                onClick={handleOpenCreateVoteSite}
+                className="px-5 py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-amber-950 flex items-center justify-center gap-2 transition-all shrink-0 hover:scale-[1.02]"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Vote Link</span>
+              </button>
+            </div>
+
+            {/* Quick Metrics */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
+              <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Total Listings</span>
+                  <div className="text-xl font-black text-white">{voteSitesList.length}</div>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center text-slate-400">
+                  <Vote className="w-4 h-4" />
+                </div>
+              </div>
+
+              <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-emerald-400 uppercase tracking-wider font-bold">Live on Website</span>
+                  <div className="text-xl font-black text-emerald-400">
+                    {voteSitesList.filter((s) => s.isActive === 1).length}
+                  </div>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-emerald-950/80 border border-emerald-800/40 flex items-center justify-center text-emerald-400">
+                  <Eye className="w-4 h-4" />
+                </div>
+              </div>
+
+              <div className="bg-slate-950/60 border border-slate-800/80 rounded-2xl p-4 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">Disabled / Hidden</span>
+                  <div className="text-xl font-black text-slate-400">
+                    {voteSitesList.filter((s) => s.isActive !== 1).length}
+                  </div>
+                </div>
+                <div className="w-9 h-9 rounded-xl bg-slate-800/80 flex items-center justify-center text-slate-400">
+                  <EyeOff className="w-4 h-4" />
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Voting Sites Table / List */}
+          <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden shadow-xl">
+            {loadingVoteSites ? (
+              <div className="p-12 text-center space-y-3">
+                <div className="w-8 h-8 border-3 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
+                <p className="text-xs text-slate-400">Loading vote sites from database...</p>
+              </div>
+            ) : voteSitesList.length === 0 ? (
+              <div className="p-12 text-center space-y-3">
+                <Vote className="w-10 h-10 text-slate-600 mx-auto" />
+                <h3 className="text-sm font-bold text-white">No Voting Links Found</h3>
+                <p className="text-xs text-slate-400 max-w-sm mx-auto">
+                  Click the button below to add your first Minecraft server voting directory listing.
+                </p>
+                <button
+                  onClick={handleOpenCreateVoteSite}
+                  className="px-4 py-2 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold rounded-xl"
+                >
+                  + Add First Vote Link
+                </button>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-slate-800 text-slate-400 uppercase text-[10px] bg-slate-950/70">
+                      <th className="py-3 px-4 w-20 text-center">Order</th>
+                      <th className="py-3 px-4">Voting Website</th>
+                      <th className="py-3 px-4">Vote URL</th>
+                      <th className="py-3 px-4">In-Game Reward</th>
+                      <th className="py-3 px-4 text-center">Status</th>
+                      <th className="py-3 px-4 text-right">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-800/80 text-slate-300">
+                    {voteSitesList.map((site, index) => (
+                      <tr key={site.id} className="hover:bg-slate-850/50 transition-colors">
+                        {/* Order & Reorder Controls */}
+                        <td className="py-4 px-4 text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <span className="font-mono font-bold text-slate-400 text-xs w-5">
+                              #{site.sortOrder || index + 1}
+                            </span>
+                            <div className="flex flex-col gap-0.5">
+                              <button
+                                onClick={() => handleMoveVoteSite(index, 'up')}
+                                disabled={index === 0}
+                                className="p-1 rounded hover:bg-slate-800 disabled:opacity-20 text-slate-400 hover:text-white"
+                                title="Move Up"
+                              >
+                                <ArrowUp className="w-3 h-3" />
+                              </button>
+                              <button
+                                onClick={() => handleMoveVoteSite(index, 'down')}
+                                disabled={index === voteSitesList.length - 1}
+                                className="p-1 rounded hover:bg-slate-800 disabled:opacity-20 text-slate-400 hover:text-white"
+                                title="Move Down"
+                              >
+                                <ArrowDown className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Name & Description */}
+                        <td className="py-4 px-4">
+                          <div className="space-y-0.5">
+                            <div className="font-bold text-white text-sm flex items-center gap-2">
+                              <span>{site.name}</span>
+                            </div>
+                            {site.description && (
+                              <p className="text-[11px] text-slate-400 max-w-xs truncate">
+                                {site.description}
+                              </p>
+                            )}
+                          </div>
+                        </td>
+
+                        {/* Vote URL */}
+                        <td className="py-4 px-4 font-mono text-[11px]">
+                          <div className="flex items-center gap-2 max-w-xs">
+                            <span className="text-slate-400 truncate">{site.url}</span>
+                            <a
+                              href={site.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-amber-400 hover:text-amber-300 p-1 hover:bg-slate-800 rounded shrink-0"
+                              title="Open Voting Site"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          </div>
+                        </td>
+
+                        {/* Reward Text */}
+                        <td className="py-4 px-4">
+                          {site.rewardText ? (
+                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/60 text-emerald-300 border border-emerald-800/40 text-[11px] font-semibold">
+                              <Sparkles className="w-3 h-3 text-emerald-400 shrink-0" />
+                              <span className="truncate max-w-[200px]">{site.rewardText}</span>
+                            </span>
+                          ) : (
+                            <span className="text-slate-500 italic text-[11px]">Default server perks</span>
+                          )}
+                        </td>
+
+                        {/* Status Toggle */}
+                        <td className="py-4 px-4 text-center">
+                          <button
+                            onClick={() => handleToggleVoteSiteActive(site)}
+                            className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider transition-all border ${
+                              site.isActive === 1
+                                ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
+                                : 'bg-slate-800 text-slate-400 border-slate-700 hover:bg-slate-750'
+                            }`}
+                            title="Click to toggle visibility on /vote page"
+                          >
+                            {site.isActive === 1 ? (
+                              <>
+                                <Eye className="w-3 h-3" />
+                                <span>Live (Active)</span>
+                              </>
+                            ) : (
+                              <>
+                                <EyeOff className="w-3 h-3" />
+                                <span>Hidden (Disabled)</span>
+                              </>
+                            )}
+                          </button>
+                        </td>
+
+                        {/* Actions */}
+                        <td className="py-4 px-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <button
+                              onClick={() => handleOpenEditVoteSite(site)}
+                              className="p-2 rounded-xl bg-slate-800 hover:bg-slate-750 text-slate-200 hover:text-white transition-colors"
+                              title="Edit Vote Link"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setVoteSiteToDelete(site)}
+                              className="p-2 rounded-xl bg-red-950/40 hover:bg-red-900/60 text-red-400 transition-colors border border-red-900/30"
+                              title="Delete Vote Link"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Add or Edit Vote Site */}
+      {voteSiteModalOpen && editingVoteSite && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm overflow-y-auto">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-lg w-full my-8 p-6 sm:p-7 space-y-5 shadow-2xl relative">
+            <div className="flex items-center justify-between border-b border-slate-800 pb-4">
+              <div className="flex items-center gap-2">
+                <div className="p-2 rounded-xl bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  <Vote className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white uppercase tracking-tight">
+                    {editingVoteSite.id ? 'Edit Vote Link' : 'Add New Vote Link'}
+                  </h3>
+                  <p className="text-xs text-slate-400">
+                    Configure the external Minecraft voting directory listing
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={() => setVoteSiteModalOpen(false)}
+                className="p-2 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveVoteSite} className="space-y-4 text-xs">
+              <div>
+                <label className="block text-slate-300 font-bold mb-1.5 uppercase tracking-wider text-[10px]">
+                  Voting Website Name *
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editingVoteSite.name || ''}
+                  onChange={(e) => setEditingVoteSite({ ...editingVoteSite, name: e.target.value })}
+                  placeholder="e.g. TopG Minecraft Servers"
+                  className="w-full bg-slate-950 border border-slate-700 focus:border-amber-500 rounded-xl p-3 text-white text-sm focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-bold mb-1.5 uppercase tracking-wider text-[10px]">
+                  Direct Vote URL *
+                </label>
+                <input
+                  type="url"
+                  required
+                  value={editingVoteSite.url || ''}
+                  onChange={(e) => setEditingVoteSite({ ...editingVoteSite, url: e.target.value })}
+                  placeholder="https://topg.org/minecraft-servers/server-..."
+                  className="w-full bg-slate-950 border border-slate-700 focus:border-amber-500 rounded-xl p-3 text-white text-sm font-mono focus:outline-none"
+                />
+                <p className="text-[10px] text-slate-500 mt-1">
+                  When players click "Vote Now", this exact link opens in a new browser tab.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-bold mb-1.5 uppercase tracking-wider text-[10px]">
+                  In-Game Reward Description
+                </label>
+                <input
+                  type="text"
+                  value={editingVoteSite.rewardText || ''}
+                  onChange={(e) => setEditingVoteSite({ ...editingVoteSite, rewardText: e.target.value })}
+                  placeholder="e.g. 500 Beast Coins + 1x Vote Crate Key"
+                  className="w-full bg-slate-950 border border-slate-700 focus:border-amber-500 rounded-xl p-3 text-white text-xs focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-slate-300 font-bold mb-1.5 uppercase tracking-wider text-[10px]">
+                  Description (Optional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={editingVoteSite.description || ''}
+                  onChange={(e) => setEditingVoteSite({ ...editingVoteSite, description: e.target.value })}
+                  placeholder="Vote daily on this website to help BeastMC rank higher and claim your reward bundle."
+                  className="w-full bg-slate-950 border border-slate-700 focus:border-amber-500 rounded-xl p-3 text-white text-xs focus:outline-none resize-none"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 pt-1">
+                <div>
+                  <label className="block text-slate-300 font-bold mb-1.5 uppercase tracking-wider text-[10px]">
+                    Display Sort Order
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={editingVoteSite.sortOrder || 1}
+                    onChange={(e) => setEditingVoteSite({ ...editingVoteSite, sortOrder: parseInt(e.target.value) || 1 })}
+                    className="w-full bg-slate-950 border border-slate-700 rounded-xl p-2.5 text-white font-mono focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex flex-col justify-end">
+                  <label className="flex items-center gap-2 cursor-pointer bg-slate-950 border border-slate-700 rounded-xl p-2.5">
+                    <input
+                      type="checkbox"
+                      checked={editingVoteSite.isActive === 1}
+                      onChange={(e) => setEditingVoteSite({ ...editingVoteSite, isActive: e.target.checked ? 1 : 0 })}
+                      className="w-4 h-4 rounded text-amber-500 focus:ring-amber-400 bg-slate-900 border-slate-600"
+                    />
+                    <span className="text-xs font-bold text-white select-none">
+                      Active (Visible)
+                    </span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-3 pt-3 border-t border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setVoteSiteModalOpen(false)}
+                  className="px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={savingVoteSite}
+                  className="px-5 py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-amber-950 transition-all flex items-center gap-2 disabled:opacity-50"
+                >
+                  {savingVoteSite ? <span>Saving...</span> : <span>Save Vote Link</span>}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Delete Vote Site Confirmation */}
+      {voteSiteToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-slate-900 border border-slate-700 rounded-3xl max-w-md w-full p-6 space-y-4 shadow-2xl relative">
+            <div className="flex items-center gap-3">
+              <div className="p-3 bg-red-950/60 border border-red-800/40 text-red-400 rounded-2xl">
+                <AlertTriangle className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-base font-black text-white uppercase tracking-tight">Delete Vote Link?</h3>
+                <p className="text-xs text-slate-400">This action cannot be undone</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-300 leading-relaxed">
+              Are you sure you want to permanently remove <strong className="text-white">"{voteSiteToDelete.name}"</strong>? Players will no longer see this voting website on the public Vote page.
+            </p>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                onClick={() => setVoteSiteToDelete(null)}
+                className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold rounded-xl transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteVoteSite}
+                className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-lg shadow-red-950 transition-colors flex items-center gap-1.5"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Delete Link</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {activeTab === 'mc-server' && (
         <div className="space-y-8 max-w-5xl">
           {/* Header */}

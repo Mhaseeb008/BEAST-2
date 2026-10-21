@@ -1,6 +1,7 @@
 export interface User {
   id: number;
   uid: string;
+  supabaseUid?: string;
   email: string;
   username: string;
   minecraftUsername: string;
@@ -83,6 +84,19 @@ export interface McNetworkServerNode {
     max: number;
   };
   motd?: string;
+}
+
+export interface VoteSite {
+  id: number;
+  name: string;
+  url: string;
+  description?: string;
+  rewardText?: string;
+  iconUrl?: string;
+  sortOrder: number;
+  isActive: number; // 1 = Enabled, 0 = Disabled
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface Product {

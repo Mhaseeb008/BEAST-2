@@ -57,7 +57,7 @@ export const PlayerDashboardPage: React.FC<PlayerDashboardPageProps> = ({ setCur
         setOrders(data);
       }
     } catch (err) {
-      console.error('Failed to fetch player orders:', err);
+      console.warn('Failed to fetch player orders:', err);
     } finally {
       setLoading(false);
     }

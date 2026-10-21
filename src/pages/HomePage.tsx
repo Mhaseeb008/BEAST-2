@@ -46,13 +46,34 @@ export const HomePage: React.FC<HomePageProps> = ({
   const fetchStatus = async (showLoading = false) => {
     if (showLoading) setIsRefreshing(true);
     try {
-      const res = await fetch('/api/mc-status');
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const res = await fetch('/api/mc-status', { signal: controller.signal });
+      clearTimeout(timeoutId);
       if (res.ok) {
         const data = await res.json();
         setMcStatus(data);
       }
     } catch (err) {
-      console.error('Failed to fetch status:', err);
+      console.warn('Live Minecraft status check unavailable:', err);
+      // Graceful offline fallback
+      setMcStatus((prev) => prev || {
+        online: false,
+        status: 'offline',
+        ip: serverIp,
+        port: serverPort,
+        players: { online: 0, max: 100, list: [] },
+        version: { name: 'Paper' },
+        motd: { clean: 'BeastMC Network' },
+        icon: null,
+        latency: null,
+        serverType: 'paper',
+        serverName: siteSettings?.siteName || 'BeastMC Network',
+        bedrockPort: siteSettings?.bedrockPort || 19132,
+        crossplayEnabled: (siteSettings?.crossplayEnabled ?? 1) === 1,
+        networkServers: [],
+        lastUpdated: new Date().toISOString(),
+      });
     } finally {
       if (showLoading) {
         setTimeout(() => setIsRefreshing(false), 600);
@@ -65,13 +86,18 @@ export const HomePage: React.FC<HomePageProps> = ({
 
     const fetchFeatured = async () => {
       try {
-        const res = await fetch('/api/products');
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch('/api/products', { signal: controller.signal });
+        clearTimeout(timeoutId);
         if (res.ok && isMounted) {
           const data = await res.json();
           setFeaturedProducts(data.slice(0, 4));
         }
       } catch (err) {
-        console.error('Failed to fetch products:', err);
+        if (isMounted) {
+          console.warn('Could not load featured products:', err);
+        }
       }
     };
 

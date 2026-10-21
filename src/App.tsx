@@ -11,6 +11,7 @@ import { LoginPage } from './pages/LoginPage.tsx';
 import { RegisterPage } from './pages/RegisterPage.tsx';
 import { PlayerDashboardPage } from './pages/PlayerDashboardPage.tsx';
 import { MyOrdersPage } from './pages/MyOrdersPage.tsx';
+import { VotePage } from './pages/VotePage.tsx';
 import { AdminDashboardPage } from './pages/AdminDashboardPage.tsx';
 import { CheckoutModal } from './components/CheckoutModal.tsx';
 import { TrackOrderModal } from './components/TrackOrderModal.tsx';
@@ -91,6 +92,9 @@ function MainApp() {
         )}
         {currentTab === 'coins' && (
           <CoinsPage onSelectProduct={(p) => setSelectedProduct(p)} />
+        )}
+        {currentTab === 'vote' && (
+          <VotePage siteSettings={siteSettings} />
         )}
         {currentTab === 'login' && (
           <LoginPage setCurrentTab={setCurrentTab} />

@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs';
 import { eq } from 'drizzle-orm';
 import { db } from './index.ts';
-import { users, siteSettings, products, paymentMethods, orders } from './schema.ts';
+import { users, siteSettings, products, paymentMethods, orders, voteSites } from './schema.ts';
 
 export async function seedDatabaseIfEmpty() {
   try {
@@ -385,7 +385,52 @@ export async function seedDatabaseIfEmpty() {
       }
     }
 
-    // 4. Staff users are managed directly by the Owner in the Admin Panel without demo credentials.
+    // 4. Check & seed default Vote Sites
+    const existingVoteSites = await db.select().from(voteSites).limit(1);
+    if (existingVoteSites.length === 0) {
+      console.log('Seeding initial Minecraft vote sites...');
+      await db.insert(voteSites).values([
+        {
+          name: 'TopG Minecraft Servers',
+          url: 'https://topg.org/minecraft-servers/',
+          description: 'Vote daily on TopG to help BeastMC rank higher and claim your daily reward bundle.',
+          rewardText: '500 Beast Coins + 1x Vote Crate Key',
+          iconUrl: '',
+          sortOrder: 1,
+          isActive: 1,
+        },
+        {
+          name: 'Minecraft-MP Server List',
+          url: 'https://minecraft-mp.com/',
+          description: 'Support our survival & skyblock network on Minecraft-MP for bonus experience and keys.',
+          rewardText: '500 Beast Coins + 1x Mystery Key',
+          iconUrl: '',
+          sortOrder: 2,
+          isActive: 1,
+        },
+        {
+          name: 'Planet Minecraft',
+          url: 'https://www.planetminecraft.com/',
+          description: 'Drop a diamond and vote on Planet Minecraft for exclusive chat cosmetics and coins.',
+          rewardText: '750 Beast Coins + 2x Vote Keys',
+          iconUrl: '',
+          sortOrder: 3,
+          isActive: 1,
+        },
+        {
+          name: 'Minecraft Server List (MSL)',
+          url: 'https://minecraft-server-list.com/',
+          description: 'Cast your vote every 24 hours on MSL and earn automatic rewards delivered to your inventory.',
+          rewardText: '500 Beast Coins + 1x Rare Crate Key',
+          iconUrl: '',
+          sortOrder: 4,
+          isActive: 1,
+        },
+      ]);
+      console.log('Default vote sites seeded successfully.');
+    }
+
+    // 5. Staff users are managed directly by the Owner in the Admin Panel without demo credentials.
     // Real staff accounts are preserved.
 
     // Always ensure mhaseebahmed0@gmail.com is seeded and has Owner role

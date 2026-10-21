@@ -9,6 +9,33 @@
     <meta property="og:description" content="Join BeastMC Network for survival, skyblock, and minigames. Explore ranks, coins, live server status, manual payment checkout, and player order tracking." />
     <meta property="og:type" content="website" />
     <meta name="twitter:card" content="summary_large_image" />
+    <script>
+      (function() {
+        try {
+          var target = window;
+          var desc = Object.getOwnPropertyDescriptor(target, 'fetch');
+          if (!desc && Object.getPrototypeOf(window)) {
+            target = Object.getPrototypeOf(window);
+            desc = Object.getOwnPropertyDescriptor(target, 'fetch');
+          }
+          if (desc && !desc.writable && !desc.set) {
+            var _activeFetch = typeof window.fetch === 'function' ? window.fetch.bind(window) : window.fetch;
+            Object.defineProperty(window, 'fetch', {
+              get: function() {
+                return _activeFetch;
+              },
+              set: function(fn) {
+                _activeFetch = fn;
+              },
+              configurable: true,
+              enumerable: true
+            });
+          }
+        } catch (e) {
+          // Ignore if environment forbids descriptor alteration
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

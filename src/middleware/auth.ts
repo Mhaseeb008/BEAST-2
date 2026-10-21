@@ -1,15 +1,16 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
-import { adminAuth } from '../lib/firebase-admin.ts';
+import { verifySupabaseToken } from '../lib/supabase-server.ts';
 import { db } from '../db/index.ts';
 import { users } from '../db/schema.ts';
-import { eq } from 'drizzle-orm';
+import { eq, or } from 'drizzle-orm';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'beastmc-production-super-secret-key-2026';
 
 export interface AuthenticatedUser {
   id: number;
   uid: string;
+  supabaseUid?: string;
   email: string;
   username: string;
   minecraftUsername: string;
@@ -42,44 +43,66 @@ export const requireAuth = async (req: AuthRequest, res: Response, next: NextFun
 
   let userRecord: any = null;
 
-  // 1. Try custom JWT verification first
+  // 1. Try Supabase Auth Token verification first
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as { id: number; uid: string; email: string };
-    if (decoded && decoded.id) {
-      const found = await db.select().from(users).where(eq(users.id, decoded.id)).limit(1);
+    const supabaseUser = await verifySupabaseToken(token);
+    if (supabaseUser && supabaseUser.id) {
+      const email = (supabaseUser.email || `${supabaseUser.id}@beastmc.net`).toLowerCase().trim();
+      
+      // Look up user strictly by authenticated Supabase UUID (do not auto-link old accounts by email)
+      const found = await db
+        .select()
+        .from(users)
+        .where(eq(users.supabaseUid, supabaseUser.id))
+        .limit(1);
+
       if (found.length > 0) {
         userRecord = found[0];
-      }
-    }
-  } catch (jwtErr) {
-    // 2. Try Firebase ID token verification
-    try {
-      const decodedFirebase = await adminAuth.verifyIdToken(token);
-      if (decodedFirebase && decodedFirebase.uid) {
-        const found = await db.select().from(users).where(eq(users.uid, decodedFirebase.uid)).limit(1);
-        if (found.length > 0) {
-          userRecord = found[0];
-        } else {
-          // If user authenticated via Firebase Google Sign-In but not yet in DB, create them
-          const newUsername = (decodedFirebase.name || decodedFirebase.email?.split('@')[0] || 'Player').replace(/\s+/g, '_');
-          const [created] = await db.insert(users).values({
-            uid: decodedFirebase.uid,
-            email: decodedFirebase.email || `${decodedFirebase.uid}@beastmc.net`,
+      } else {
+        // Create user in PostgreSQL synchronized with Supabase Auth
+        const meta = supabaseUser.user_metadata || {};
+        const newUsername = (meta.username || meta.full_name || email.split('@')[0] || 'Player')
+          .replace(/\s+/g, '_')
+          .slice(0, 30);
+        const newMinecraft = (meta.minecraft_username || newUsername).slice(0, 30);
+
+        const [created] = await db
+          .insert(users)
+          .values({
+            uid: supabaseUser.id,
+            supabaseUid: supabaseUser.id,
+            email,
             username: newUsername,
-            minecraftUsername: newUsername,
+            minecraftUsername: newMinecraft,
             role: 'player',
             permissions: '[]',
-          }).returning();
-          userRecord = created;
+            isBanned: 0,
+          })
+          .returning();
+        userRecord = created;
+      }
+    }
+  } catch (supabaseErr) {
+    console.error('Supabase token verification error:', supabaseErr);
+  }
+
+  // 2. Fallback: JWT verification (custom application tokens / session tokens)
+  if (!userRecord) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as { id: number; uid: string; email: string };
+      if (decoded && decoded.id) {
+        const found = await db.select().from(users).where(eq(users.id, decoded.id)).limit(1);
+        if (found.length > 0) {
+          userRecord = found[0];
         }
       }
-    } catch (fbErr) {
-      return res.status(401).json({ error: 'Unauthorized: Invalid token' });
+    } catch {
+      // Token is invalid for both Supabase and custom JWT
     }
   }
 
   if (!userRecord) {
-    return res.status(401).json({ error: 'Unauthorized: User not found' });
+    return res.status(401).json({ error: 'Unauthorized: Session invalid or expired. Please sign in again.' });
   }
 
   if (userRecord.isBanned) {
@@ -96,6 +119,7 @@ export const requireAuth = async (req: AuthRequest, res: Response, next: NextFun
   req.user = {
     id: userRecord.id,
     uid: userRecord.uid,
+    supabaseUid: userRecord.supabaseUid || undefined,
     email: userRecord.email,
     username: userRecord.username,
     minecraftUsername: userRecord.minecraftUsername,

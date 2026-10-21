@@ -14,8 +14,9 @@ import {
   orders,
   sentEmails,
   auditLogs,
+  voteSites,
 } from './src/db/schema.ts';
-import { eq, desc, and, or, sql, gte, lte, ilike } from 'drizzle-orm';
+import { eq, desc, asc, and, or, sql, gte, lte, ilike, isNotNull } from 'drizzle-orm';
 import { getDateRangeForPreset, DatePreset } from './src/lib/orderDateFilters.ts';
 import {
   requireAuth,
@@ -27,6 +28,7 @@ import {
 import { sendDeliveryConfirmationEmail } from './src/lib/email.ts';
 import { seedDatabaseIfEmpty } from './src/db/seed.ts';
 import { adminAuth } from './src/lib/firebase-admin.ts';
+import { verifySupabaseToken, supabaseServer } from './src/lib/supabase-server.ts';
 import {
   getDatabaseSeasonSettings,
   saveDatabaseSeasonSettings,
@@ -964,6 +966,20 @@ app.get('/api/payment-methods', async (req, res) => {
   }
 });
 
+// Public: Active Minecraft Vote Sites / Links
+app.get('/api/vote-sites', async (req, res) => {
+  try {
+    const list = await db
+      .select()
+      .from(voteSites)
+      .where(eq(voteSites.isActive, 1))
+      .orderBy(asc(voteSites.sortOrder), asc(voteSites.id));
+    res.json(list);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to fetch vote sites' });
+  }
+});
+
 // ==========================================
 // 2. AUTHENTICATION ROUTES
 // ==========================================
@@ -1081,24 +1097,6 @@ app.post('/api/auth/login', async (req, res) => {
       return res.status(401).json({ error: 'Invalid email or password' });
     }
 
-    if (user.email.toLowerCase().trim() === 'mhaseebahmed0@gmail.com' && user.role !== 'owner') {
-      const allPerms = [
-        'manage_settings',
-        'manage_products',
-        'manage_payments',
-        'verify_orders',
-        'deliver_orders',
-        'manage_admins',
-        'view_audit_logs',
-      ];
-      await db.update(users).set({
-        role: 'owner',
-        permissions: JSON.stringify(allPerms),
-      }).where(eq(users.id, user.id));
-      user.role = 'owner';
-      user.permissions = JSON.stringify(allPerms);
-    }
-
     const token = signUserToken(user);
     let permissions: string[] = [];
     try {
@@ -1122,6 +1120,194 @@ app.post('/api/auth/login', async (req, res) => {
   } catch (error: any) {
     console.error('Login error:', error);
     res.status(500).json({ error: error.message || 'Login failed' });
+  }
+});
+
+// ==========================================
+// SUPABASE AUTH SYNCHRONIZATION
+// ==========================================
+app.post('/api/auth/sync', async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    const bearerToken = authHeader && authHeader.startsWith('Bearer ')
+      ? authHeader.split('Bearer ')[1].trim()
+      : req.body.token;
+
+    if (!bearerToken) {
+      return res.status(400).json({ error: 'Missing authentication token' });
+    }
+
+    const supabaseUser = await verifySupabaseToken(bearerToken);
+    if (!supabaseUser || !supabaseUser.id) {
+      return res.status(401).json({ error: 'Invalid or expired Supabase authentication session' });
+    }
+
+    const email = (supabaseUser.email || `${supabaseUser.id}@beastmc.net`).toLowerCase().trim();
+    const meta = supabaseUser.user_metadata || {};
+    const requestedUsername = (req.body.username || meta.username || meta.full_name || email.split('@')[0] || 'Player')
+      .replace(/\s+/g, '_')
+      .slice(0, 30);
+    const requestedMinecraft = (req.body.minecraftUsername || meta.minecraft_username || requestedUsername).slice(0, 30);
+
+    // Look up existing user strictly by authenticated Supabase UUID (do not auto-link old accounts by email)
+    const found = await db
+      .select()
+      .from(users)
+      .where(eq(users.supabaseUid, supabaseUser.id))
+      .limit(1);
+
+    let userRecord: any = null;
+
+    if (found.length > 0) {
+      userRecord = found[0];
+      const updates: any = { updatedAt: new Date() };
+
+      // Update Minecraft IGN if provided
+      if (req.body.minecraftUsername && req.body.minecraftUsername.trim()) {
+        updates.minecraftUsername = req.body.minecraftUsername.trim();
+      }
+
+      if (Object.keys(updates).length > 1) {
+        const [updated] = await db
+          .update(users)
+          .set(updates)
+          .where(eq(users.id, userRecord.id))
+          .returning();
+        userRecord = updated;
+      }
+    } else {
+      // Create new application profile in PostgreSQL for this new Supabase user
+      const [created] = await db
+        .insert(users)
+        .values({
+          uid: supabaseUser.id,
+          supabaseUid: supabaseUser.id,
+          email,
+          username: requestedUsername,
+          minecraftUsername: requestedMinecraft,
+          role: 'player',
+          permissions: '[]',
+          isBanned: 0,
+        })
+        .returning();
+      userRecord = created;
+    }
+
+    if (userRecord.isBanned) {
+      return res.status(403).json({ error: 'Your account has been suspended by BeastMC Administration' });
+    }
+
+    const token = signUserToken(userRecord);
+    let permissions: string[] = [];
+    try {
+      permissions = JSON.parse(userRecord.permissions || '[]');
+    } catch {
+      permissions = [];
+    }
+
+    res.json({
+      token,
+      user: {
+        id: userRecord.id,
+        uid: userRecord.uid,
+        supabaseUid: userRecord.supabaseUid,
+        email: userRecord.email,
+        username: userRecord.username,
+        minecraftUsername: userRecord.minecraftUsername,
+        role: userRecord.role,
+        permissions,
+      },
+    });
+  } catch (error: any) {
+    console.error('Supabase sync error:', error);
+    res.status(500).json({ error: error.message || 'Failed to synchronize authentication session' });
+  }
+});
+
+// ==========================================
+// SECURE SERVER-SIDE OWNER BOOTSTRAP ENDPOINT
+// ==========================================
+app.post('/api/admin/bootstrap-owner', requireAuth, async (req: AuthRequest, res) => {
+  try {
+    const { bootstrapSecret } = req.body;
+    const authenticatedEmail = req.user?.email?.toLowerCase().trim();
+
+    // 1. Validate email matches designated owner email
+    if (authenticatedEmail !== 'mhaseebahmed0@gmail.com') {
+      return res.status(403).json({
+        error: 'Forbidden: Owner role is strictly reserved for mhaseebahmed0@gmail.com.',
+      });
+    }
+
+    // 2. Validate administrator-controlled bootstrap secret strictly from environment variable
+    const expectedSecret = process.env.OWNER_BOOTSTRAP_SECRET;
+    if (!expectedSecret || !bootstrapSecret || bootstrapSecret !== expectedSecret) {
+      return res.status(403).json({
+        error: 'Security Verification Failed: Invalid or unconfigured owner bootstrap secret key.',
+      });
+    }
+
+    // 3. One-time lock: Prevent duplicate owner bootstrapping if an active owner is already provisioned
+    const existingActiveOwner = await db
+      .select()
+      .from(users)
+      .where(and(eq(users.role, 'owner'), isNotNull(users.supabaseUid)))
+      .limit(1);
+
+    if (existingActiveOwner.length > 0 && existingActiveOwner[0].id !== req.user!.id) {
+      return res.status(403).json({
+        error: 'Security Lock: An active owner account has already been bootstrapped and locked.',
+      });
+    }
+
+    // 3. Grant Owner role & full administrative permissions
+    const allPermissions = [
+      'manage_settings',
+      'manage_products',
+      'manage_payments',
+      'verify_orders',
+      'deliver_orders',
+      'manage_admins',
+      'view_audit_logs',
+    ];
+
+    const [updatedUser] = await db
+      .update(users)
+      .set({
+        role: 'owner',
+        permissions: JSON.stringify(allPermissions),
+        updatedAt: new Date(),
+      })
+      .where(eq(users.id, req.user!.id))
+      .returning();
+
+    // 4. Record high-priority audit log
+    await db.insert(auditLogs).values({
+      adminEmail: authenticatedEmail,
+      action: 'OWNER_ACCOUNT_PROVISIONED',
+      details: `Owner privileges successfully provisioned for ${authenticatedEmail} (Supabase UUID: ${req.user!.supabaseUid || req.user!.uid}) using verified administrator bootstrap.`,
+    });
+
+    const refreshedToken = signUserToken(updatedUser);
+
+    res.json({
+      success: true,
+      message: 'Owner privileges successfully provisioned with full administrative access.',
+      token: refreshedToken,
+      user: {
+        id: updatedUser.id,
+        uid: updatedUser.uid,
+        supabaseUid: updatedUser.supabaseUid,
+        email: updatedUser.email,
+        username: updatedUser.username,
+        minecraftUsername: updatedUser.minecraftUsername,
+        role: updatedUser.role,
+        permissions: allPermissions,
+      },
+    });
+  } catch (error: any) {
+    console.error('Owner bootstrap error:', error);
+    res.status(500).json({ error: error.message || 'Failed to complete owner bootstrap' });
   }
 });
 
@@ -1158,24 +1344,6 @@ app.post('/api/auth/google-sync', async (req, res) => {
         }).returning();
         user = created;
       }
-    }
-
-    if (user && email.toLowerCase().trim() === 'mhaseebahmed0@gmail.com' && user.role !== 'owner') {
-      const allPerms = [
-        'manage_settings',
-        'manage_products',
-        'manage_payments',
-        'verify_orders',
-        'deliver_orders',
-        'manage_admins',
-        'view_audit_logs',
-      ];
-      await db.update(users).set({
-        role: 'owner',
-        permissions: JSON.stringify(allPerms),
-      }).where(eq(users.id, user.id));
-      user.role = 'owner';
-      user.permissions = JSON.stringify(allPerms);
     }
 
     if (user.isBanned) {
@@ -2582,6 +2750,134 @@ app.delete('/api/admin/payment-methods/:id', requireAuth, requirePermission('man
     res.json({ success: true, message: 'Payment method deleted' });
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Failed to delete payment method' });
+  }
+});
+
+// Admin: Vote Sites Management (CRUD, Enable/Disable, Reorder)
+app.get('/api/admin/vote-sites', requireAuth, requireAdmin, async (_req, res) => {
+  try {
+    const all = await db
+      .select()
+      .from(voteSites)
+      .orderBy(asc(voteSites.sortOrder), asc(voteSites.id));
+    res.json(all);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to fetch admin vote sites' });
+  }
+});
+
+app.post('/api/admin/vote-sites', requireAuth, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { name, url, description, rewardText, iconUrl, sortOrder, isActive } = req.body;
+    if (!name || !url) {
+      return res.status(400).json({ error: 'Voting Site Name and URL are required.' });
+    }
+
+    let orderNum = Number(sortOrder);
+    if (isNaN(orderNum) || sortOrder === undefined) {
+      const highest = await db.select().from(voteSites).orderBy(desc(voteSites.sortOrder)).limit(1);
+      orderNum = highest.length > 0 ? (highest[0].sortOrder ?? 0) + 1 : 1;
+    }
+
+    const [created] = await db.insert(voteSites).values({
+      name: String(name).trim(),
+      url: String(url).trim(),
+      description: description ? String(description).trim() : '',
+      rewardText: rewardText ? String(rewardText).trim() : 'Vote to receive in-game Beast Coins and Crate Keys!',
+      iconUrl: iconUrl ? String(iconUrl).trim() : '',
+      sortOrder: orderNum,
+      isActive: isActive !== undefined ? (isActive ? 1 : 0) : 1,
+    }).returning();
+
+    await db.insert(auditLogs).values({
+      adminEmail: req.user!.email,
+      action: 'VOTE_SITE_CREATED',
+      details: `Created vote site: ${created.name} (${created.url})`,
+    });
+
+    res.status(201).json(created);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to create vote site' });
+  }
+});
+
+app.put('/api/admin/vote-sites/:id', requireAuth, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const id = Number(req.params.id);
+    const { name, url, description, rewardText, iconUrl, sortOrder, isActive } = req.body;
+
+    const updateObj: any = { updatedAt: new Date() };
+    if (name !== undefined) updateObj.name = String(name).trim();
+    if (url !== undefined) updateObj.url = String(url).trim();
+    if (description !== undefined) updateObj.description = String(description).trim();
+    if (rewardText !== undefined) updateObj.rewardText = String(rewardText).trim();
+    if (iconUrl !== undefined) updateObj.iconUrl = String(iconUrl).trim();
+    if (sortOrder !== undefined) updateObj.sortOrder = Number(sortOrder);
+    if (isActive !== undefined) updateObj.isActive = isActive ? 1 : 0;
+
+    const [updated] = await db.update(voteSites).set(updateObj).where(eq(voteSites.id, id)).returning();
+
+    await db.insert(auditLogs).values({
+      adminEmail: req.user!.email,
+      action: 'VOTE_SITE_UPDATED',
+      details: `Updated vote site #${id} (${updated.name})`,
+    });
+
+    res.json(updated);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to update vote site' });
+  }
+});
+
+app.delete('/api/admin/vote-sites/:id', requireAuth, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const id = Number(req.params.id);
+    const found = await db.select().from(voteSites).where(eq(voteSites.id, id)).limit(1);
+    await db.delete(voteSites).where(eq(voteSites.id, id));
+
+    await db.insert(auditLogs).values({
+      adminEmail: req.user!.email,
+      action: 'VOTE_SITE_DELETED',
+      details: `Deleted vote site #${id} (${found[0]?.name || 'unknown'})`,
+    });
+
+    res.json({ success: true, id });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to delete vote site' });
+  }
+});
+
+// Reorder vote sites
+app.put('/api/admin/vote-sites-reorder', requireAuth, requireAdmin, async (req: AuthRequest, res) => {
+  try {
+    const { items } = req.body; // Array of { id: number, sortOrder: number }
+    if (!Array.isArray(items)) {
+      return res.status(400).json({ error: 'Items array required for reordering' });
+    }
+
+    for (const item of items) {
+      if (item.id && typeof item.sortOrder === 'number') {
+        await db
+          .update(voteSites)
+          .set({ sortOrder: item.sortOrder, updatedAt: new Date() })
+          .where(eq(voteSites.id, Number(item.id)));
+      }
+    }
+
+    await db.insert(auditLogs).values({
+      adminEmail: req.user!.email,
+      action: 'VOTE_SITES_REORDERED',
+      details: `Reordered ${items.length} vote sites`,
+    });
+
+    const updatedList = await db
+      .select()
+      .from(voteSites)
+      .orderBy(asc(voteSites.sortOrder), asc(voteSites.id));
+
+    res.json(updatedList);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message || 'Failed to reorder vote sites' });
   }
 });
 

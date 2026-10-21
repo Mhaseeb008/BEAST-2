@@ -3,7 +3,8 @@ import { integer, pgTable, serial, text, timestamp } from 'drizzle-orm/pg-core';
 
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
-  uid: text('uid').notNull().unique(), // Firebase UID or local UUID
+  uid: text('uid').notNull().unique(), // Historical identifier or unique account identifier
+  supabaseUid: text('supabase_uid').unique(), // Authenticated Supabase Auth User UUID
   email: text('email').notNull().unique(),
   username: text('username').notNull(),
   minecraftUsername: text('minecraft_username').notNull(),
@@ -124,6 +125,19 @@ export const auditLogs = pgTable('audit_logs', {
   action: text('action').notNull(),
   details: text('details'),
   createdAt: timestamp('created_at').defaultNow(),
+});
+
+export const voteSites = pgTable('vote_sites', {
+  id: serial('id').primaryKey(),
+  name: text('name').notNull(),
+  url: text('url').notNull(),
+  description: text('description').default(''),
+  rewardText: text('reward_text').default('Vote to receive in-game Beast Coins and Crate Keys!'),
+  iconUrl: text('icon_url').default(''),
+  sortOrder: integer('sort_order').default(0),
+  isActive: integer('is_active').default(1), // 1 = Enabled, 0 = Disabled
+  createdAt: timestamp('created_at').defaultNow(),
+  updatedAt: timestamp('updated_at').defaultNow(),
 });
 
 export const usersRelations = relations(users, ({ many }) => ({

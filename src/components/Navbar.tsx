@@ -18,6 +18,7 @@ import {
   ExternalLink,
   ChevronDown,
   Package,
+  Vote,
 } from 'lucide-react';
 
 interface NavbarProps {
@@ -41,21 +42,30 @@ export const Navbar: React.FC<NavbarProps> = ({
   const serverIp = siteSettings?.serverIp || 'play.beastmc.net';
 
   useEffect(() => {
+    let isMounted = true;
     const fetchStatus = async () => {
       try {
-        const res = await fetch('/api/mc-status');
-        if (res.ok) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+        const res = await fetch('/api/mc-status', { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok && isMounted) {
           const data = await res.json();
           setMcStatus(data);
         }
       } catch (err) {
-        console.error('Failed to fetch status in navbar:', err);
+        if (isMounted) {
+          console.warn('Navbar live status check skipped:', err);
+        }
       }
     };
 
     fetchStatus();
     const interval = setInterval(fetchStatus, 30000);
-    return () => clearInterval(interval);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, [siteSettings]);
 
   const copyIp = () => {
@@ -188,26 +198,15 @@ export const Navbar: React.FC<NavbarProps> = ({
               Store
             </button>
             <button
-              onClick={() => setCurrentTab('ranks')}
+              onClick={() => setCurrentTab('vote')}
               className={`px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-all ${
-                currentTab === 'ranks'
+                currentTab === 'vote'
                   ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-700/50 shadow-sm shadow-emerald-900/50'
                   : 'text-slate-300 hover:text-white hover:bg-slate-900'
               }`}
             >
-              <Crown className="w-4 h-4 text-amber-400" />
-              Ranks
-            </button>
-            <button
-              onClick={() => setCurrentTab('coins')}
-              className={`px-3 py-2 rounded-lg text-sm font-semibold flex items-center gap-1.5 transition-all ${
-                currentTab === 'coins'
-                  ? 'bg-emerald-950/80 text-emerald-400 border border-emerald-700/50 shadow-sm shadow-emerald-900/50'
-                  : 'text-slate-300 hover:text-white hover:bg-slate-900'
-              }`}
-            >
-              <Coins className="w-4 h-4 text-yellow-400" />
-              Coins
+              <Vote className="w-4 h-4 text-emerald-400" />
+              Vote
             </button>
             {user && (
               <button
@@ -369,16 +368,11 @@ export const Navbar: React.FC<NavbarProps> = ({
               Store
             </button>
             <button
-              onClick={() => { setCurrentTab('ranks'); setMobileMenuOpen(false); }}
-              className={`p-3 rounded-xl text-left font-semibold text-sm ${currentTab === 'ranks' ? 'bg-emerald-950 text-emerald-400' : 'bg-slate-900 text-slate-300'}`}
+              onClick={() => { setCurrentTab('vote'); setMobileMenuOpen(false); }}
+              className={`p-3 rounded-xl text-left font-semibold text-sm flex items-center gap-2 ${currentTab === 'vote' ? 'bg-emerald-950 text-emerald-400' : 'bg-slate-900 text-slate-300'}`}
             >
-              Ranks
-            </button>
-            <button
-              onClick={() => { setCurrentTab('coins'); setMobileMenuOpen(false); }}
-              className={`p-3 rounded-xl text-left font-semibold text-sm ${currentTab === 'coins' ? 'bg-emerald-950 text-emerald-400' : 'bg-slate-900 text-slate-300'}`}
-            >
-              Coins
+              <Vote className="w-4 h-4 text-emerald-400" />
+              <span>Vote</span>
             </button>
           </div>
 

@@ -1,0 +1,1083 @@
+{
+  "users": [
+    {
+      "id": 6,
+      "uid": "oc0xD0bjlUQup37UrAvbHd9JqeA3",
+      "email": "mhaseebahmed94@gmail.com",
+      "username": "Haseeb_Ahmed",
+      "minecraft_username": "Haseeb_Ahmed",
+      "password_hash": null,
+      "role": "player",
+      "permissions": "[]",
+      "is_banned": 0,
+      "created_at": "2026-10-16T03:41:21.944Z",
+      "updated_at": "2026-10-16T03:41:21.944Z"
+    },
+    {
+      "id": 5,
+      "uid": "zKVoUZRMY3TBUE2sl9f9ENxJws73",
+      "email": "mhaseebahmed0@gmail.com",
+      "username": "Haseeb",
+      "minecraft_username": "Fire_Is_Pro",
+      "password_hash": "$2b$10$jTWAtYoOBcGELq4xTs.4cO26UkBpywtGPR4R8qtCB5kshJC1wIiy6",
+      "role": "owner",
+      "permissions": "[\"manage_settings\",\"manage_products\",\"manage_payments\",\"verify_orders\",\"deliver_orders\",\"manage_admins\",\"view_audit_logs\"]",
+      "is_banned": 0,
+      "created_at": "2026-10-16T03:32:23.956Z",
+      "updated_at": "2026-10-16T03:38:48.665Z"
+    }
+  ],
+  "products": [
+    {
+      "id": 1,
+      "name": "VIP Rank",
+      "slug": "vip-rank",
+      "category": "rank",
+      "price": 499,
+      "original_price": 799,
+      "description": "Step up from player status with essential quality of life perks and cosmetic perks.",
+      "perks": "[\"Green [VIP] Chat Tag & Tab Name\",\"Fly Command in all Hubs & Lobbies (/fly)\",\"Access to 2 Player Vaults (/pv 1-2)\",\"Set up to 3 Home warps (/sethome)\",\"1x Monthly Rare Mystery Box\",\"Reserved Server Slot during full peak hours\",\"Exclusive [VIP] Discord Role\"]",
+      "badge": "STARTER",
+      "color": "#10b981",
+      "icon": "Shield",
+      "is_featured": 0,
+      "is_active": 1,
+      "sort_order": 1,
+      "created_at": "2026-10-16T03:20:34.974Z",
+      "image_url": ""
+    },
+    {
+      "id": 2,
+      "name": "VIP+ Rank",
+      "slug": "vip-plus-rank",
+      "category": "rank",
+      "price": 999,
+      "original_price": 1499,
+      "description": "Unlock enhanced survival perks, extra vaults, and custom particle cosmetics.",
+      "perks": "[\"Aqua [VIP+] Chat Tag & Tab Name\",\"All perks from VIP rank included\",\"Set up to 6 Home warps (/sethome)\",\"Access to 4 Player Vaults (/pv 1-4)\",\"3x Monthly Epic Mystery Boxes\",\"Access to /feed command (30 min cooldown)\",\"Wilderness Teleport without cooldown (/rtp)\",\"Exclusive particle trails in lobbies\"]",
+      "badge": "POPULAR",
+      "color": "#06b6d4",
+      "icon": "ShieldCheck",
+      "is_featured": 0,
+      "is_active": 1,
+      "sort_order": 2,
+      "created_at": "2026-10-16T03:20:35.027Z",
+      "image_url": ""
+    },
+    {
+      "id": 3,
+      "name": "MVP Rank",
+      "slug": "mvp-rank",
+      "category": "rank",
+      "price": 1999,
+      "original_price": 2999,
+      "description": "A true beast rank equipped with auto-smelt, enhanced shop discounts, and priority queue.",
+      "perks": "[\"Gold [MVP] Chat Tag & Tab Name\",\"All perks from VIP & VIP+ included\",\"Set up to 10 Home warps (/sethome)\",\"Access to 7 Player Vaults (/pv 1-7)\",\"Auto-Smelt toggle for mining (/autosmelt)\",\"Access to /craft & /wb workbench command anywhere\",\"5x Monthly Mythic Mystery Boxes\",\"5% Store Discount on future purchases\",\"Gold Glowing Armor cosmetic in lobby\"]",
+      "badge": "BEST VALUE",
+      "color": "#f59e0b",
+      "icon": "Award",
+      "is_featured": 1,
+      "is_active": 1,
+      "sort_order": 3,
+      "created_at": "2026-10-16T03:20:35.075Z",
+      "image_url": ""
+    },
+    {
+      "id": 4,
+      "name": "MVP+ Rank",
+      "slug": "mvp-plus-rank",
+      "category": "rank",
+      "price": 3499,
+      "original_price": 4999,
+      "description": "Maximum power with /fly in survival claims, keep inventory in Nether, and private vault expansion.",
+      "perks": "[\"Diamond Blue [MVP+] Chat Tag & Tab Name\",\"Fly in your own Survival & Skyblock Claims (/fly)\",\"Keep Inventory in Nether & The End\",\"Set up to 20 Home warps (/sethome)\",\"Access to 12 Player Vaults (/pv 1-12)\",\"Access to /hat, /near, /condense\",\"8x Monthly Mythic Mystery Boxes\",\"10% In-Game Shop Discount\",\"Priority 1 Support Ticket Queue\"]",
+      "badge": "POWER",
+      "color": "#3b82f6",
+      "icon": "Zap",
+      "is_featured": 1,
+      "is_active": 1,
+      "sort_order": 4,
+      "created_at": "2026-10-16T03:20:35.126Z",
+      "image_url": ""
+    },
+    {
+      "id": 5,
+      "name": "BEAST Rank",
+      "slug": "beast-rank",
+      "category": "rank",
+      "price": 5999,
+      "original_price": 8999,
+      "description": "Dominate BeastMC with custom animated gradient titles, weekly keys, and VIP lounge access.",
+      "perks": "[\"Animated Fiery [BEAST] Chat Tag & Tab Name\",\"All perks from MVP+ included\",\"Weekly 2x Beast Crate Keys automatically delivered\",\"/repair all command (1 hour cooldown)\",\"Unlimited Home Warps (/sethome)\",\"Access to 20 Player Vaults (/pv 1-20)\",\"Private Access to the Beast Lounge & High-Roller Casino\",\"15% Store Discount permanently applied\",\"Custom Wing Particle Effect & Dragon Pet\"]",
+      "badge": "SIGNATURE",
+      "color": "#ef4444",
+      "icon": "Flame",
+      "is_featured": 1,
+      "is_active": 1,
+      "sort_order": 5,
+      "created_at": "2026-10-16T03:20:35.174Z",
+      "image_url": ""
+    },
+    {
+      "id": 6,
+      "name": "OVERLORD Rank",
+      "slug": "overlord-rank",
+      "category": "rank",
+      "price": 9999,
+      "original_price": 14999,
+      "description": "The supreme pinnacle rank of BeastMC Network. Eternal KeepXP, God status and custom perks.",
+      "perks": "[\"Supreme Crown Hologram + Dark Red [OVERLORD] Tag\",\"Eternal KeepXP across all deaths in all worlds\",\"Unlimited Player Vaults (/pv 1-54)\",\"5x Weekly Overlord Crate Keys\",\"/god, /heal, /feed, /fly in all claims with 0 cooldown\",\"Custom In-Game Nickname with RGB Hex colors (/nick)\",\"Custom Discord Role, Secret Staff-Player Council Channel\",\"Personal In-Game NPC statue at spawn\",\"Permanent 20% Store & Coin Discount\"]",
+      "badge": "ULTIMATE GOD",
+      "color": "#a855f7",
+      "icon": "Crown",
+      "is_featured": 1,
+      "is_active": 1,
+      "sort_order": 6,
+      "created_at": "2026-10-16T03:20:35.222Z",
+      "image_url": ""
+    },
+    {
+      "id": 7,
+      "name": "1,000 Beast Coins",
+      "slug": "coins-1000",
+      "category": "coins",
+      "price": 299,
+      "original_price": 399,
+      "description": "Great for purchasing starter cosmetics, player titles, or in-game claim blocks.",
+      "perks": "[\"Instant 1,000 Coins credited to your in-game balance\",\"Usable in /shop, /cosmetics, and /auctions\",\"Includes bonus 50 Beast XP\"]",
+      "badge": "STARTER",
+      "color": "#fbbf24",
+      "icon": "Coins",
+      "is_featured": 0,
+      "is_active": 1,
+      "sort_order": 10,
+      "created_at": "2026-10-16T03:20:35.270Z",
+      "image_url": ""
+    },
+    {
+      "id": 8,
+      "name": "3,500 Beast Coins (+15% Bonus)",
+      "slug": "coins-3500",
+      "category": "coins",
+      "price": 799,
+      "original_price": 999,
+      "description": "Boost your progress with 3,500 Coins including 500 bonus coins.",
+      "perks": "[\"3,500 Coins total (3,000 + 500 bonus)\",\"Unlock custom chat tags and miniature pets\",\"1x Free Rare Crate Key bonus\"]",
+      "badge": "15% BONUS",
+      "color": "#fbbf24",
+      "icon": "Coins",
+      "is_featured": 0,
+      "is_active": 1,
+      "sort_order": 11,
+      "created_at": "2026-10-16T03:20:35.317Z",
+      "image_url": ""
+    },
+    {
+      "id": 9,
+      "name": "7,500 Beast Coins (+25% Bonus)",
+      "slug": "coins-7500",
+      "category": "coins",
+      "price": 1499,
+      "original_price": 1999,
+      "description": "Our top mid-tier currency pack loaded with extra bonuses.",
+      "perks": "[\"7,500 Coins total (6,000 + 1,500 bonus)\",\"Unlock legendary weapon skins and kill effects\",\"2x Free Epic Crate Keys bonus\"]",
+      "badge": "25% BONUS",
+      "color": "#fbbf24",
+      "icon": "Coins",
+      "is_featured": 0,
+      "is_active": 1,
+      "sort_order": 12,
+      "created_at": "2026-10-16T03:20:35.365Z",
+      "image_url": ""
+    },
+    {
+      "id": 10,
+      "name": "15,000 Beast Coins (+35% Bonus)",
+      "slug": "coins-15000",
+      "category": "coins",
+      "price": 2499,
+      "original_price": 3499,
+      "description": "The community favorite pack. Get huge purchasing power for economy & cosmetics.",
+      "perks": "[\"15,000 Coins total (11,000 + 4,000 bonus)\",\"Free Mythic Crate Key\",\"Exclusive \\\"Coin Baron\\\" chat title\",\"5x XP Booster tokens (1 hour 2x XP)\"]",
+      "badge": "MOST POPULAR",
+      "color": "#fbbf24",
+      "icon": "Coins",
+      "is_featured": 1,
+      "is_active": 1,
+      "sort_order": 13,
+      "created_at": "2026-10-16T03:20:35.414Z",
+      "image_url": ""
+    },
+    {
+      "id": 11,
+      "name": "35,000 Beast Coins (+50% Bonus)",
+      "slug": "coins-35000",
+      "category": "coins",
+      "price": 4999,
+      "original_price": 7499,
+      "description": "Whale tier coin pack with maximum extra coins and exclusive perks.",
+      "perks": "[\"35,000 Coins total (23,000 + 12,000 huge bonus)\",\"3x Mythic Crate Keys + 1x Beast Key\",\"Exclusive Golden Dragon Pet\",\"10x Server-wide booster tokens\"]",
+      "badge": "50% BONUS",
+      "color": "#fbbf24",
+      "icon": "Coins",
+      "is_featured": 1,
+      "is_active": 1,
+      "sort_order": 14,
+      "created_at": "2026-10-16T03:20:35.461Z",
+      "image_url": ""
+    },
+    {
+      "id": 12,
+      "name": "Mythic Crate Key Pack (x5)",
+      "slug": "crate-mythic-5",
+      "category": "crate",
+      "price": 899,
+      "original_price": 1299,
+      "description": "Open 5 Mythic Crates at spawn for legendary armor, custom enchants, and rare spawners.",
+      "perks": "[\"5x Mythic Crate Keys delivered to your inventory\",\"Chance to win Beast Rank, Netherite God Sets, and Silk Touch Spawners\",\"Keys never expire and can be traded in-game\"]",
+      "badge": "HOT",
+      "color": "#ec4899",
+      "icon": "Key",
+      "is_featured": 0,
+      "is_active": 1,
+      "sort_order": 20,
+      "created_at": "2026-10-16T03:20:35.509Z",
+      "image_url": ""
+    },
+    {
+      "id": 13,
+      "name": "Beast Starter Survival Bundle",
+      "slug": "bundle-starter-survival",
+      "category": "bundle",
+      "price": 1299,
+      "original_price": 2199,
+      "description": "Everything a new survival player needs to jump straight to the top of the leaderboards.",
+      "perks": "[\"1x VIP Rank Voucher (30 days)\",\"2,500 Beast Coins\",\"3x Rare Crate Keys + 1x Epic Key\",\"Full Protection IV Diamond Starter Gear\",\"10,000 Claim Blocks for your base\"]",
+      "badge": "MEGA DEAL",
+      "color": "#10b981",
+      "icon": "Package",
+      "is_featured": 1,
+      "is_active": 1,
+      "sort_order": 21,
+      "created_at": "2026-10-16T03:20:35.556Z",
+      "image_url": ""
+    },
+    {
+      "id": 14,
+      "name": "Demon Slayer Blade & Rank",
+      "slug": "demon-slayer-1792169005946",
+      "category": "bundle",
+      "price": 2499,
+      "original_price": null,
+      "description": "Exclusive bundle with custom textures",
+      "perks": "[\"Custom Blade\",\"Particle Aura\"]",
+      "badge": "LIMITED",
+      "color": "#ef4444",
+      "icon": "Shield",
+      "is_featured": 0,
+      "is_active": 1,
+      "sort_order": 0,
+      "created_at": "2026-10-16T16:43:26.032Z",
+      "image_url": "/uploads/product_1792169005577_n7y3vkn.png"
+    },
+    {
+      "id": 15,
+      "name": "beast",
+      "slug": "https://encrypted-tbn0.gstatic.com/images?q=tbn:and9gcsfjh5jcrpfq65mii1tsgi887qyejcjrcbefkwhfvnl4a&s=10",
+      "category": "crate",
+      "price": 800,
+      "original_price": 1000,
+      "description": "hi",
+      "perks": "[\"[\\\"Exclusive Perks Here\\\"]\"]",
+      "badge": "POPULAR",
+      "color": "#10b981",
+      "icon": "Shield",
+      "is_featured": 0,
+      "is_active": 1,
+      "sort_order": 0,
+      "created_at": "2026-10-17T08:12:33.723Z",
+      "image_url": "/uploads/product_1792224751153_clve6tv.webp"
+    }
+  ],
+  "orders": [
+    {
+      "id": 1,
+      "order_code": "BMC-2026-1042",
+      "user_id": null,
+      "user_email": "player@beastmc.net",
+      "minecraft_username": "ProGamer99",
+      "product_id": 1,
+      "product_name": "VIP Rank",
+      "amount": 499,
+      "currency": "USD",
+      "payment_method_id": 1,
+      "payment_method_name": "Bank Transfer / IBAN (Direct)",
+      "transaction_id": "TXN-984019284-BANK",
+      "sender_note": "Paid from Habib Bank account. Please activate soon!",
+      "payment_screenshot_url": "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?q=80&w=600&auto=format&fit=crop",
+      "status": "Payment Rejected",
+      "rejection_reason": "Payment transaction verification failed. Please check your transaction ID or receipt and contact support.",
+      "approved_at": null,
+      "delivered_at": null,
+      "delivery_notice": "",
+      "delivery_email_sent": 0,
+      "delivered_by_admin": "",
+      "created_at": "2026-10-16T03:20:36.722Z",
+      "updated_at": "2026-10-18T13:17:08.946Z",
+      "payment_verified": 0,
+      "payment_verified_at": null,
+      "payment_verified_by": "",
+      "order_history": "[{\"action\":\"Order Deleted\",\"timestamp\":\"2026-10-18T13:17:08.946Z\",\"adminEmail\":\"mhaseebahmed0@gmail.com\",\"note\":\"Order soft-deleted from active dashboard by Owner. Financial records and transaction audit preserved.\"}]",
+      "is_deleted": 1,
+      "deleted_at": "2026-10-18T13:17:08.946Z",
+      "deleted_by_admin": "mhaseebahmed0@gmail.com"
+    },
+    {
+      "id": 4,
+      "order_code": "BMC-2026-6737",
+      "user_id": 5,
+      "user_email": "mhaseebahmed0@gmail.com",
+      "minecraft_username": "Fire_Is_Pro",
+      "product_id": 7,
+      "product_name": "1,000 Beast Coins",
+      "amount": 299,
+      "currency": "USD",
+      "payment_method_id": 1,
+      "payment_method_name": "Bank Transfer / IBAN (Direct)",
+      "transaction_id": "hydtzjhgh",
+      "sender_note": "aetfdhd",
+      "payment_screenshot_url": "data:image/webp;base64,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",
+      "status": "Payment Verified",
+      "rejection_reason": "",
+      "approved_at": null,
+      "delivered_at": null,
+      "delivery_notice": "Payment verified by Owner. Awaiting manual delivery queue.",
+      "delivery_email_sent": 0,
+      "delivered_by_admin": "",
+      "created_at": "2026-10-18T13:15:04.931Z",
+      "updated_at": "2026-10-18T13:17:14.053Z",
+      "payment_verified": 1,
+      "payment_verified_at": "2026-10-18T13:15:26.107Z",
+      "payment_verified_by": "Haseeb",
+      "order_history": "[{\"action\":\"Order Created\",\"timestamp\":\"2026-10-18T13:15:04.897Z\",\"adminEmail\":\"System\",\"note\":\"Order placed for 1,000 Beast Coins ($2.99) via Bank Transfer / IBAN (Direct).\"},{\"action\":\"Payment Submitted\",\"timestamp\":\"2026-10-18T13:15:04.897Z\",\"adminEmail\":\"mhaseebahmed0@gmail.com\",\"note\":\"Transaction ID: hydtzjhgh. Proof screenshot uploaded.\"},{\"action\":\"Payment Verified\",\"timestamp\":\"2026-10-18T13:15:26.106Z\",\"adminEmail\":\"mhaseebahmed0@gmail.com\",\"note\":\"Payment proof manually verified and matched with financial records. TID: hydtzjhgh.\"},{\"action\":\"Order Deleted\",\"timestamp\":\"2026-10-18T13:17:14.053Z\",\"adminEmail\":\"mhaseebahmed0@gmail.com\",\"note\":\"Order soft-deleted from active dashboard by Owner. Financial records and transaction audit preserved.\"}]",
+      "is_deleted": 1,
+      "deleted_at": "2026-10-18T13:17:14.053Z",
+      "deleted_by_admin": "mhaseebahmed0@gmail.com"
+    },
+    {
+      "id": 3,
+      "order_code": "BMC-2026-9598",
+      "user_id": 5,
+      "user_email": "mhaseebahmed0@gmail.com",
+      "minecraft_username": "Fire_Is_Pro",
+      "product_id": 15,
+      "product_name": "beast",
+      "amount": 1000,
+      "currency": "USD",
+      "payment_method_id": 1,
+      "payment_method_name": "Bank Transfer / IBAN (Direct)",
+      "transaction_id": "hhokhj",
+      "sender_note": "lhkjl",
+      "payment_screenshot_url": "",
+      "status": "Approved",
+      "rejection_reason": "",
+      "approved_at": "2026-10-17T08:27:42.590Z",
+      "delivered_at": null,
+      "delivery_notice": "Your payment has been verified. Your order will be delivered within 24 hours.",
+      "delivery_email_sent": 0,
+      "delivered_by_admin": "",
+      "created_at": "2026-10-17T08:13:11.263Z",
+      "updated_at": "2026-10-17T13:28:02.854Z",
+      "payment_verified": 1,
+      "payment_verified_at": "2026-10-17T08:27:42.590Z",
+      "payment_verified_by": "Haseeb",
+      "order_history": "[{\"action\":\"Order Reopened\",\"timestamp\":\"2026-10-17T08:27:36.714Z\",\"adminEmail\":\"mhaseebahmed0@gmail.com\",\"note\":\"Order reopened by Owner and restored to Pending Review. Preserved original payment screenshot and customer details for reverification.\"},{\"action\":\"Order Approved\",\"timestamp\":\"2026-10-17T08:27:42.589Z\",\"adminEmail\":\"mhaseebahmed0@gmail.com\",\"note\":\"Payment approved. Ready for in-game product delivery.\"},{\"action\":\"Order Deleted\",\"timestamp\":\"2026-10-17T13:28:02.854Z\",\"adminEmail\":\"mhaseebahmed0@gmail.com\",\"note\":\"Order soft-deleted from active dashboard by Owner. Financial records and transaction audit preserved.\"}]",
+      "is_deleted": 1,
+      "deleted_at": "2026-10-17T13:28:02.854Z",
+      "deleted_by_admin": "mhaseebahmed0@gmail.com"
+    },
+    {
+      "id": 2,
+      "order_code": "BMC-2026-2924",
+      "user_id": null,
+      "user_email": "testplayer_1792167496781@example.com",
+      "minecraft_username": "TestSteve",
+      "product_id": 1,
+      "product_name": "VIP Rank",
+      "amount": 499,
+      "currency": "USD",
+      "payment_method_id": 1,
+      "payment_method_name": "Bank Transfer / IBAN (Direct)",
+      "transaction_id": "TXN-SAFE-TEST-999",
+      "sender_note": "Order data preservation test",
+      "payment_screenshot_url": "https://example.com/proof.png",
+      "status": "Delivered",
+      "rejection_reason": "",
+      "approved_at": "2026-10-16T16:19:53.510Z",
+      "delivered_at": "2026-10-16T16:20:22.797Z",
+      "delivery_notice": "Delivered successfully! Your rank/items are active in-game.",
+      "delivery_email_sent": 1,
+      "delivered_by_admin": "Haseeb",
+      "created_at": "2026-10-16T16:18:17.416Z",
+      "updated_at": "2026-10-17T13:28:26.355Z",
+      "payment_verified": 0,
+      "payment_verified_at": null,
+      "payment_verified_by": "",
+      "order_history": "[{\"action\":\"Order Deleted\",\"timestamp\":\"2026-10-17T13:28:26.355Z\",\"adminEmail\":\"mhaseebahmed0@gmail.com\",\"note\":\"Order soft-deleted from active dashboard by Owner. Financial records and transaction audit preserved.\"}]",
+      "is_deleted": 1,
+      "deleted_at": "2026-10-17T13:28:26.355Z",
+      "deleted_by_admin": "mhaseebahmed0@gmail.com"
+    }
+  ],
+  "payment_methods": [
+    {
+      "id": 1,
+      "name": "Bank Transfer / IBAN (Direct)",
+      "account_title": "BeastMC Network LLC",
+      "account_number": "9820-4102-5819",
+      "iban": "GB29BEAST98204102581901",
+      "bank_name": "Global Commerce International Bank",
+      "qr_code_url": "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=IBAN:GB29BEAST98204102581901_BeastMC",
+      "instructions": "1. Transfer the exact amount in USD/EUR/GBP from your online banking app.\n2. In the transfer reference/remarks, enter your Minecraft username.\n3. Take a screenshot of the completed transfer confirmation.\n4. Upload the screenshot and enter the Bank Reference / Transaction ID below.",
+      "currency": "USD",
+      "exchange_rate": "1.0",
+      "is_active": 1,
+      "created_at": "2026-10-16T03:20:35.652Z"
+    },
+    {
+      "id": 2,
+      "name": "EasyPaisa / JazzCash / Mobile Wallet",
+      "account_title": "BeastMC Finance Desk",
+      "account_number": "0300-1234567",
+      "iban": "PK12EPAY03001234567001",
+      "bank_name": "EasyPaisa / JazzCash Pakistan",
+      "qr_code_url": "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=03001234567_EasyPaisa_BeastMC",
+      "instructions": "1. Open EasyPaisa or JazzCash app.\n2. Send exact order amount (Converted at current exchange rate PKR 280 / USD).\n3. Enter your Order ID in remarks/purpose.\n4. Take a clear screenshot of the successful transaction receipt.\n5. Paste the TID (Transaction ID) and upload your screenshot.",
+      "currency": "PKR",
+      "exchange_rate": "280.0",
+      "is_active": 1,
+      "created_at": "2026-10-16T03:20:35.700Z"
+    },
+    {
+      "id": 3,
+      "name": "PayPal Manual (Friends & Family)",
+      "account_title": "BeastMC Operations",
+      "account_number": "payments@beastmc.net",
+      "iban": "",
+      "bank_name": "PayPal Worldwide",
+      "qr_code_url": "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=https://paypal.me/beastmcnetwork",
+      "instructions": "1. Send payment via PayPal to: payments@beastmc.net\n2. IMPORTANT: Choose \"Sending to a friend\" (Friends & Family) to avoid delays.\n3. Leave the PayPal note blank or enter your order code only. Do not mention Minecraft.\n4. Save your PayPal Transaction ID and upload the receipt screenshot.",
+      "currency": "USD",
+      "exchange_rate": "1.0",
+      "is_active": 1,
+      "created_at": "2026-10-16T03:20:35.747Z"
+    },
+    {
+      "id": 4,
+      "name": "Crypto USDT (TRC-20)",
+      "account_title": "BeastMC Treasury TRON",
+      "account_number": "TXv8bN5qV2Xm9pKd8zJw2Re7Lt4bQ3cE1a",
+      "iban": "",
+      "bank_name": "Tether TRC-20 Network",
+      "qr_code_url": "https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=TXv8bN5qV2Xm9pKd8zJw2Re7Lt4bQ3cE1a",
+      "instructions": "1. Send exact USDT amount to the TRC-20 wallet address above.\n2. Ensure network chosen is TRON (TRC-20) to prevent loss of funds.\n3. Wait for 1 network confirmation.\n4. Copy the TxHash / Transaction Hash and upload a screenshot of your wallet withdrawal.",
+      "currency": "USDT",
+      "exchange_rate": "1.0",
+      "is_active": 1,
+      "created_at": "2026-10-16T03:20:35.794Z"
+    }
+  ],
+  "site_settings": [
+    {
+      "id": 1,
+      "site_name": "BeastMC Network",
+      "server_ip": "51.79.230.80",
+      "server_port": 10137,
+      "discord_url": "https://discord.gg/beastmc",
+      "logo_url": "/uploads/logo_1792428369255_x2dtnky.webp",
+      "hero_title": "WELCOME TO BEASTMC NETWORK",
+      "hero_subtitle": "The ultimate competitive Minecraft survival, skyblock, and minigames network with custom economy, custom bosses, and non-stop events.",
+      "hero_bg_url": "",
+      "support_email": "support@beastmc.net",
+      "updated_at": "2026-10-19T17:00:43.623Z",
+      "banner_url": "/uploads/banner_1792429243005_1rly11b.png",
+      "favicon_url": "/uploads/favicon_1792428371532_37hjbdr.webp",
+      "server_type": "paper",
+      "network_servers": "[]",
+      "bedrock_port": 19132,
+      "crossplay_enabled": 1,
+      "announcement_text": "BeastMC Season 1 • 24h Order Delivery Guaranteed • Manual Bank & Crypto Accepted",
+      "announcement_enabled": 1
+    }
+  ],
+  "audit_logs": [
+    {
+      "id": 1,
+      "admin_email": "owner@beastmc.net",
+      "action": "USER_BANNED",
+      "details": "Banned user #5 (mhaseebahmed0@gmail.com)",
+      "created_at": "2026-10-16T03:36:16.514Z"
+    },
+    {
+      "id": 2,
+      "admin_email": "owner@beastmc.net",
+      "action": "PAYMENT_REJECTED",
+      "details": "Rejected payment for Order #BMC-2026-1042 (VIP Rank). Reason: Payment transaction verification failed. Please check your transaction ID or receipt and contact support.",
+      "created_at": "2026-10-16T03:38:11.258Z"
+    },
+    {
+      "id": 3,
+      "admin_email": "owner@beastmc.net",
+      "action": "USER_UNBANNED",
+      "details": "Unbanned user #5 (mhaseebahmed0@gmail.com)",
+      "created_at": "2026-10-16T03:38:48.744Z"
+    },
+    {
+      "id": 4,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "PASSWORD_RESET_INITIATED",
+      "details": "Initiated secure password reset for user #4 (player@beastmc.net)",
+      "created_at": "2026-10-16T04:02:55.301Z"
+    },
+    {
+      "id": 5,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "USER_DELETED",
+      "details": "Owner deleted user account #7 (testplayer_1792167475765@example.com, IGN: TestSteve)",
+      "created_at": "2026-10-16T16:17:56.586Z"
+    },
+    {
+      "id": 6,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "USER_DELETED",
+      "details": "Owner deleted user account #8 (testplayer_1792167496781@example.com, IGN: TestSteve)",
+      "created_at": "2026-10-16T16:18:17.978Z"
+    },
+    {
+      "id": 7,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "USER_ROLE_CHANGED",
+      "details": "Changed role of user #1 (owner@beastmc.net) to player with perms: [manage_settings, manage_products, manage_payments, verify_orders, deliver_orders, manage_admins, view_audit_logs]",
+      "created_at": "2026-10-16T16:19:12.761Z"
+    },
+    {
+      "id": 8,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "USER_DELETED",
+      "details": "Owner deleted user account #1 (owner@beastmc.net, IGN: BeastMaster_CEO)",
+      "created_at": "2026-10-16T16:19:16.154Z"
+    },
+    {
+      "id": 9,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "USER_DELETED",
+      "details": "Owner deleted user account #2 (admin@beastmc.net, IGN: AlexTheAdmin)",
+      "created_at": "2026-10-16T16:19:20.859Z"
+    },
+    {
+      "id": 10,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "USER_DELETED",
+      "details": "Owner deleted user account #3 (mod@beastmc.net, IGN: CharlieModMC)",
+      "created_at": "2026-10-16T16:19:29.337Z"
+    },
+    {
+      "id": 11,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "USER_DELETED",
+      "details": "Owner deleted user account #4 (player@beastmc.net, IGN: ProGamer99)",
+      "created_at": "2026-10-16T16:19:33.901Z"
+    },
+    {
+      "id": 12,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "PAYMENT_APPROVED",
+      "details": "Approved payment for Order #BMC-2026-2924 (VIP Rank) by TestSteve",
+      "created_at": "2026-10-16T16:19:53.587Z"
+    },
+    {
+      "id": 13,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "ORDER_DELIVERED",
+      "details": "Order #BMC-2026-2924 marked as Delivered to TestSteve. Sent email notification to testplayer_1792167496781@example.com.",
+      "created_at": "2026-10-16T16:20:22.934Z"
+    },
+    {
+      "id": 14,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_UPLOADED",
+      "details": "Uploaded logo image (PNG, 0.1 KB) -> /uploads/logo_1792169005084_bod6pfu.png",
+      "created_at": "2026-10-16T16:43:25.112Z"
+    },
+    {
+      "id": 15,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_UPLOADED",
+      "details": "Uploaded background image (JPG, 0.1 KB) -> /uploads/background_1792169005210_85ui50x.jpg",
+      "created_at": "2026-10-16T16:43:25.237Z"
+    },
+    {
+      "id": 16,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_UPLOADED",
+      "details": "Uploaded favicon image (WEBP, 0.0 KB) -> /uploads/favicon_1792169005330_4kq28lw.webp",
+      "created_at": "2026-10-16T16:43:25.357Z"
+    },
+    {
+      "id": 17,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_UPLOADED",
+      "details": "Uploaded banner image (PNG, 0.1 KB) -> /uploads/banner_1792169005453_8azcuuj.png",
+      "created_at": "2026-10-16T16:43:25.481Z"
+    },
+    {
+      "id": 18,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_UPLOADED",
+      "details": "Uploaded product image (PNG, 0.1 KB) -> /uploads/product_1792169005577_n7y3vkn.png",
+      "created_at": "2026-10-16T16:43:25.605Z"
+    },
+    {
+      "id": 19,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "SETTINGS_UPDATED",
+      "details": "Updated site settings: BeastMC Network, IP: play.beastmc.net, Logo: Configured, Favicon: Configured",
+      "created_at": "2026-10-16T16:43:25.842Z"
+    },
+    {
+      "id": 20,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "PRODUCT_CREATED",
+      "details": "Created product: Demon Slayer Blade & Rank (bundle)",
+      "created_at": "2026-10-16T16:43:26.092Z"
+    },
+    {
+      "id": 21,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_DELETED",
+      "details": "Deleted image file: product_1792169005577_n7y3vkn.png",
+      "created_at": "2026-10-16T16:43:26.274Z"
+    },
+    {
+      "id": 22,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_UPLOADED",
+      "details": "Uploaded background image (WEBP, 275.7 KB) -> /uploads/background_1792169122357_xrhf8n6.webp",
+      "created_at": "2026-10-16T16:45:22.388Z"
+    },
+    {
+      "id": 23,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "SETTINGS_UPDATED",
+      "details": "Updated site settings: BeastMC Network, IP: play.beastmc.net, Logo: Configured, Favicon: Configured",
+      "created_at": "2026-10-16T16:45:23.042Z"
+    },
+    {
+      "id": 24,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_UPLOADED",
+      "details": "Uploaded logo image (WEBP, 44.8 KB) -> /uploads/logo_1792169125800_4u618fp.webp",
+      "created_at": "2026-10-16T16:45:25.828Z"
+    },
+    {
+      "id": 25,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "SETTINGS_UPDATED",
+      "details": "Updated site settings: BeastMC Network, IP: play.beastmc.net, Logo: Configured, Favicon: Configured",
+      "created_at": "2026-10-16T16:45:26.477Z"
+    },
+    {
+      "id": 26,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_UPLOADED",
+      "details": "Uploaded background image (WEBP, 46.4 KB) -> /uploads/background_1792169160018_9zo295j.webp",
+      "created_at": "2026-10-16T16:46:00.047Z"
+    },
+    {
+      "id": 27,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "SETTINGS_UPDATED",
+      "details": "Updated site settings: BeastMC Network, IP: play.beastmc.net, Logo: Configured, Favicon: Configured",
+      "created_at": "2026-10-16T16:46:00.709Z"
+    },
+    {
+      "id": 28,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_UPLOADED",
+      "details": "Uploaded banner image (WEBP, 46.4 KB) -> /uploads/banner_1792169162310_hfxnouh.webp",
+      "created_at": "2026-10-16T16:46:02.337Z"
+    },
+    {
+      "id": 29,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "SETTINGS_UPDATED",
+      "details": "Updated site settings: BeastMC Network, IP: play.beastmc.net, Logo: Configured, Favicon: Configured",
+      "created_at": "2026-10-16T16:46:02.993Z"
+    },
+    {
+      "id": 30,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_UPLOADED",
+      "details": "Uploaded favicon image (WEBP, 46.4 KB) -> /uploads/favicon_1792169172203_etb57un.webp",
+      "created_at": "2026-10-16T16:46:12.232Z"
+    },
+    {
+      "id": 31,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "SETTINGS_UPDATED",
+      "details": "Updated site settings: BeastMC Network, IP: play.beastmc.net, Logo: Configured, Favicon: Configured",
+      "created_at": "2026-10-16T16:46:12.877Z"
+    },
+    {
+      "id": 32,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "USER_DELETED",
+      "details": "Owner deleted user account #9 (regularplayer_imgtest@beastmc.net, IGN: RegularPlayer_MC)",
+      "created_at": "2026-10-16T16:48:10.073Z"
+    },
+    {
+      "id": 33,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "SETTINGS_UPDATED",
+      "details": "Updated site settings: BeastMC Network, IP: 51.79.230.80:10137:25565, Type: paper, Logo: Configured",
+      "created_at": "2026-10-16T17:03:48.086Z"
+    },
+    {
+      "id": 34,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "SETTINGS_UPDATED",
+      "details": "Updated site settings: BeastMC Network, IP: 51.79.230.80:10137:25565, Type: paper, Logo: Configured",
+      "created_at": "2026-10-16T17:03:50.313Z"
+    },
+    {
+      "id": 35,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "MINECRAFT_SETTINGS_UPDATED",
+      "details": "Owner updated Minecraft server settings: 51.79.230.80:10137 (Bedrock: 19132, Type: paper, Crossplay: Yes)",
+      "created_at": "2026-10-17T07:50:29.751Z"
+    },
+    {
+      "id": 36,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_UPLOADED",
+      "details": "Uploaded product image (WEBP, 275.7 KB) -> /uploads/product_1792224751153_clve6tv.webp",
+      "created_at": "2026-10-17T08:12:31.179Z"
+    },
+    {
+      "id": 37,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "PRODUCT_CREATED",
+      "details": "Created product: beast (crate)",
+      "created_at": "2026-10-17T08:12:33.779Z"
+    },
+    {
+      "id": 38,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "PRODUCT_UPDATED",
+      "details": "Updated product #15 (beast)",
+      "created_at": "2026-10-17T08:13:53.009Z"
+    },
+    {
+      "id": 39,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "PRODUCT_UPDATED",
+      "details": "Updated product #15 (beast)",
+      "created_at": "2026-10-17T08:14:35.746Z"
+    },
+    {
+      "id": 40,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "PRODUCT_UPDATED",
+      "details": "Updated product #15 (beast)",
+      "created_at": "2026-10-17T08:14:36.087Z"
+    },
+    {
+      "id": 41,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "PAYMENT_REJECTED",
+      "details": "Rejected payment for Order #BMC-2026-9598 (beast). Reason: Payment transaction verification failed. Please check your transaction ID or receipt and contact support.",
+      "created_at": "2026-10-17T08:15:04.811Z"
+    },
+    {
+      "id": 42,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "ORDER_REOPENED",
+      "details": "Owner reopened rejected Order #BMC-2026-9598 (beast) for Fire_Is_Pro. Restored to Pending Review without automatic delivery.",
+      "created_at": "2026-10-17T08:27:36.798Z"
+    },
+    {
+      "id": 43,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "ORDER_APPROVED",
+      "details": "Approved payment for Order #BMC-2026-9598 (beast) by Fire_Is_Pro",
+      "created_at": "2026-10-17T08:27:42.668Z"
+    },
+    {
+      "id": 44,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "ORDER_DELETED",
+      "details": "Owner soft-deleted Order #BMC-2026-9598 (beast) for Fire_Is_Pro. Amount: $10.00, Status was: Approved",
+      "created_at": "2026-10-17T13:28:02.939Z"
+    },
+    {
+      "id": 45,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "ORDER_DELETED",
+      "details": "Owner soft-deleted Order #BMC-2026-2924 (VIP Rank) for TestSteve. Amount: $4.99, Status was: Delivered",
+      "created_at": "2026-10-17T13:28:26.441Z"
+    },
+    {
+      "id": 46,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "PAYMENT_VERIFIED",
+      "details": "Verified payment proof for Order #BMC-2026-6737 (Amount: $2.99, Method: Bank Transfer / IBAN (Direct), TID: hydtzjhgh)",
+      "created_at": "2026-10-18T13:15:26.210Z"
+    },
+    {
+      "id": 47,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "ORDER_DELETED",
+      "details": "Owner soft-deleted Order #BMC-2026-1042 (VIP Rank) for ProGamer99. Amount: $4.99, Status was: Payment Rejected",
+      "created_at": "2026-10-18T13:17:09.031Z"
+    },
+    {
+      "id": 48,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "ORDER_DELETED",
+      "details": "Owner soft-deleted Order #BMC-2026-6737 (1,000 Beast Coins) for Fire_Is_Pro. Amount: $2.99, Status was: Payment Verified",
+      "created_at": "2026-10-18T13:17:14.139Z"
+    },
+    {
+      "id": 49,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "ANNOUNCEMENT_UPDATED",
+      "details": "Updated Announcement Bar: Enabled, Text: \"BeastMC Season 4 • 24h Order Delivery Guaranteed • Manual Bank & Crypto Accepted\"",
+      "created_at": "2026-10-19T16:33:10.839Z"
+    },
+    {
+      "id": 50,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "ANNOUNCEMENT_UPDATED",
+      "details": "Updated Announcement Bar: Disabled, Text: \"Test Announcement • 50% Off Everything\"",
+      "created_at": "2026-10-19T16:33:15.746Z"
+    },
+    {
+      "id": 51,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "ANNOUNCEMENT_UPDATED",
+      "details": "Updated Announcement Bar: Enabled, Text: \"BeastMC Season 4 • 24h Order Delivery Guaranteed • Manual Bank & Crypto Accepted\"",
+      "created_at": "2026-10-19T16:33:21.106Z"
+    },
+    {
+      "id": 52,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "ANNOUNCEMENT_UPDATED",
+      "details": "Updated Announcement Bar: Disabled, Text: \"BeastMC Season 4 • 24h Order Delivery Guaranteed • Manual Bank & Crypto Accepted\"",
+      "created_at": "2026-10-19T16:34:59.794Z"
+    },
+    {
+      "id": 53,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "ANNOUNCEMENT_UPDATED",
+      "details": "Updated Announcement Bar: Enabled, Text: \"BeastMC Season 1 • 24h Order Delivery Guaranteed • Manual Bank & Crypto Accepted\"",
+      "created_at": "2026-10-19T16:35:35.322Z"
+    },
+    {
+      "id": 54,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_UPLOADED",
+      "details": "Uploaded logo image (WEBP, 44.8 KB) -> /uploads/logo_1792428369255_x2dtnky.webp",
+      "created_at": "2026-10-19T16:46:09.278Z"
+    },
+    {
+      "id": 55,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "SETTINGS_UPDATED",
+      "details": "Updated site settings: BeastMC Network, Announcement: Enabled (\"BeastMC Season 1 • 24h Order Delivery Guaranteed • Manual Bank & Crypto Accepted\"), IP: 51.79.230.80:10137",
+      "created_at": "2026-10-19T16:46:09.916Z"
+    },
+    {
+      "id": 56,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_UPLOADED",
+      "details": "Uploaded favicon image (WEBP, 44.8 KB) -> /uploads/favicon_1792428371532_37hjbdr.webp",
+      "created_at": "2026-10-19T16:46:11.554Z"
+    },
+    {
+      "id": 57,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "SETTINGS_UPDATED",
+      "details": "Updated site settings: BeastMC Network, Announcement: Enabled (\"BeastMC Season 1 • 24h Order Delivery Guaranteed • Manual Bank & Crypto Accepted\"), IP: 51.79.230.80:10137",
+      "created_at": "2026-10-19T16:46:12.175Z"
+    },
+    {
+      "id": 58,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_UPLOADED",
+      "details": "Uploaded background image (PNG, 2040.3 KB) -> /uploads/background_1792428468832_2fsqbl6.png",
+      "created_at": "2026-10-19T16:47:48.861Z"
+    },
+    {
+      "id": 59,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "SETTINGS_UPDATED",
+      "details": "Updated site settings: BeastMC Network, Announcement: Enabled (\"BeastMC Season 1 • 24h Order Delivery Guaranteed • Manual Bank & Crypto Accepted\"), IP: 51.79.230.80:10137",
+      "created_at": "2026-10-19T16:47:49.499Z"
+    },
+    {
+      "id": 60,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_DELETED",
+      "details": "Deleted image file: background_1792428468832_2fsqbl6.png",
+      "created_at": "2026-10-19T16:48:18.899Z"
+    },
+    {
+      "id": 61,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "SETTINGS_UPDATED",
+      "details": "Updated site settings: BeastMC Network, Announcement: Enabled (\"BeastMC Season 1 • 24h Order Delivery Guaranteed • Manual Bank & Crypto Accepted\"), IP: 51.79.230.80:10137",
+      "created_at": "2026-10-19T16:48:19.518Z"
+    },
+    {
+      "id": 62,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_UPLOADED",
+      "details": "Uploaded banner image (PNG, 2040.3 KB) -> /uploads/banner_1792428505537_jcviycm.png",
+      "created_at": "2026-10-19T16:48:25.566Z"
+    },
+    {
+      "id": 63,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "SETTINGS_UPDATED",
+      "details": "Updated site settings: BeastMC Network, Announcement: Enabled (\"BeastMC Season 1 • 24h Order Delivery Guaranteed • Manual Bank & Crypto Accepted\"), IP: 51.79.230.80:10137",
+      "created_at": "2026-10-19T16:48:26.194Z"
+    },
+    {
+      "id": 64,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_UPLOADED",
+      "details": "Uploaded banner image (PNG, 982.9 KB) -> /uploads/banner_1792428895510_pnti0ca.png",
+      "created_at": "2026-10-19T16:54:55.534Z"
+    },
+    {
+      "id": 65,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "SETTINGS_UPDATED",
+      "details": "Updated site settings: BeastMC Network, Announcement: Enabled (\"BeastMC Season 1 • 24h Order Delivery Guaranteed • Manual Bank & Crypto Accepted\"), IP: 51.79.230.80:10137",
+      "created_at": "2026-10-19T16:54:56.184Z"
+    },
+    {
+      "id": 66,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_UPLOADED",
+      "details": "Uploaded banner image (PNG, 1577.4 KB) -> /uploads/banner_1792429173171_imfnc8o.png",
+      "created_at": "2026-10-19T16:59:33.196Z"
+    },
+    {
+      "id": 67,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "SETTINGS_UPDATED",
+      "details": "Updated site settings: BeastMC Network, Announcement: Enabled (\"BeastMC Season 1 • 24h Order Delivery Guaranteed • Manual Bank & Crypto Accepted\"), IP: 51.79.230.80:10137",
+      "created_at": "2026-10-19T16:59:33.818Z"
+    },
+    {
+      "id": 68,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "IMAGE_UPLOADED",
+      "details": "Uploaded banner image (PNG, 1852.3 KB) -> /uploads/banner_1792429243005_1rly11b.png",
+      "created_at": "2026-10-19T17:00:43.035Z"
+    },
+    {
+      "id": 69,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "SETTINGS_UPDATED",
+      "details": "Updated site settings: BeastMC Network, Announcement: Enabled (\"BeastMC Season 1 • 24h Order Delivery Guaranteed • Manual Bank & Crypto Accepted\"), IP: 51.79.230.80:10137",
+      "created_at": "2026-10-19T17:00:43.701Z"
+    },
+    {
+      "id": 70,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "VOTE_SITE_CREATED",
+      "details": "Created vote site: MinecraftServers.org (https://minecraftservers.org/server/beastmc)",
+      "created_at": "2026-10-20T15:57:53.777Z"
+    },
+    {
+      "id": 71,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "VOTE_SITE_UPDATED",
+      "details": "Updated vote site #5 (MinecraftServers.org)",
+      "created_at": "2026-10-20T15:57:53.938Z"
+    },
+    {
+      "id": 72,
+      "admin_email": "mhaseebahmed0@gmail.com",
+      "action": "VOTE_SITE_DELETED",
+      "details": "Deleted vote site #5 (MinecraftServers.org)",
+      "created_at": "2026-10-20T15:57:54.188Z"
+    }
+  ],
+  "sent_emails": [
+    {
+      "id": 1,
+      "order_id": 2,
+      "recipient_email": "testplayer_1792167496781@example.com",
+      "minecraft_username": "TestSteve",
+      "subject": "[BeastMC Support] Order #BMC-2026-2924 Delivered - Enjoy your VIP Rank!",
+      "product_name": "VIP Rank",
+      "body_html": "\n<!DOCTYPE html>\n<html>\n<head>\n  <meta charset=\"utf-8\">\n  <style>\n    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0b0f19; color: #e2e8f0; margin: 0; padding: 20px; }\n    .container { max-width: 600px; margin: 0 auto; background-color: #111827; border: 1px solid #1f2937; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }\n    .header { background: linear-gradient(135deg, #059669 0%, #047857 50%, #064e3b 100%); padding: 30px 20px; text-align: center; }\n    .header h1 { margin: 0; font-size: 26px; color: #ffffff; letter-spacing: 1px; font-weight: 800; text-transform: uppercase; }\n    .badge { display: inline-block; background-color: #10b981; color: #ffffff; padding: 4px 12px; border-radius: 9999px; font-size: 12px; font-weight: 700; margin-top: 10px; }\n    .content { padding: 30px; }\n    .greeting { font-size: 18px; font-weight: 600; color: #f8fafc; margin-bottom: 16px; }\n    .info-card { background-color: #1f2937; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #10b981; }\n    .info-row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 14px; }\n    .info-label { color: #94a3b8; }\n    .info-val { font-weight: 700; color: #f8fafc; }\n    .btn { display: inline-block; background-color: #10b981; color: #ffffff; font-weight: 700; text-decoration: none; padding: 12px 28px; border-radius: 8px; margin-top: 10px; }\n    .discord-box { background-color: #1e1b4b; border: 1px solid #4338ca; border-radius: 8px; padding: 16px; margin: 24px 0; text-align: center; }\n    .footer { text-align: center; font-size: 12px; color: #64748b; padding: 20px; border-top: 1px solid #1f2937; }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1>BeastMC Network</h1>\n      <div class=\"badge\">Official Order Delivery Confirmation</div>\n    </div>\n    <div class=\"content\">\n      <div class=\"greeting\">Hey TestSteve,</div>\n      <p style=\"color: #cbd5e1; line-height: 1.6;\">\n        Great news! Your BeastMC Network store purchase has been verified and successfully delivered to your Minecraft account.\n      </p>\n\n      <div class=\"info-card\">\n        <div class=\"info-row\">\n          <span class=\"info-label\">Order ID:</span>\n          <span class=\"info-val\" style=\"color: #34d399;\">#BMC-2026-2924</span>\n        </div>\n        <div class=\"info-row\">\n          <span class=\"info-label\">Delivered Product:</span>\n          <span class=\"info-val\">VIP Rank</span>\n        </div>\n        <div class=\"info-row\">\n          <span class=\"info-label\">Minecraft Username:</span>\n          <span class=\"info-val\">TestSteve</span>\n        </div>\n        <div class=\"info-row\">\n          <span class=\"info-label\">Delivery Status:</span>\n          <span class=\"info-val\" style=\"color: #10b981;\">DELIVERED (Fulfilled)</span>\n        </div>\n        <div class=\"info-row\" style=\"margin-bottom: 0;\">\n          <span class=\"info-label\">Total Amount Paid:</span>\n          <span class=\"info-val\">$4.99 USD</span>\n        </div>\n      </div>\n\n      <p style=\"color: #cbd5e1; line-height: 1.6;\">\n        To access your perks or items in-game, connect to the server at <strong>play.beastmc.net</strong>. If you are currently online, please reconnect or type <code>/claim</code> to refresh your rank and entitlements.\n      </p>\n\n      <div class=\"discord-box\">\n        <div style=\"font-weight: 700; color: #c7d2fe; margin-bottom: 6px;\">Need Assistance or Claim Issues?</div>\n        <div style=\"font-size: 13px; color: #94a3b8; margin-bottom: 12px;\">Join the BeastMC Discord community for 24/7 priority player support.</div>\n        <a href=\"https://discord.gg/beastmc\" target=\"_blank\" style=\"background-color: #5865F2; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-weight: 700; font-size: 13px; display: inline-block;\">\n          Open BeastMC Discord Support\n        </a>\n      </div>\n    </div>\n    <div class=\"footer\">\n      Sent with care by BeastMC Support &bull; Email: support@beastmc.net &bull; 2026 BeastMC Network LLC\n    </div>\n  </div>\n</body>\n</html>\n  ",
+      "discord_link": "https://discord.gg/beastmc",
+      "status": "sent",
+      "created_at": "2026-10-16T16:20:22.876Z"
+    }
+  ],
+  "vote_sites": [
+    {
+      "id": 1,
+      "name": "TopG Minecraft Servers",
+      "url": "https://topg.org/minecraft-servers/",
+      "description": "Vote daily on TopG to help BeastMC rank higher and claim your daily reward bundle.",
+      "reward_text": "500 Beast Coins + 1x Vote Crate Key",
+      "icon_url": "",
+      "sort_order": 1,
+      "is_active": 1,
+      "created_at": "2026-10-20T15:45:36.482Z",
+      "updated_at": "2026-10-20T15:45:36.482Z"
+    },
+    {
+      "id": 2,
+      "name": "Minecraft-MP Server List",
+      "url": "https://minecraft-mp.com/",
+      "description": "Support our survival & skyblock network on Minecraft-MP for bonus experience and keys.",
+      "reward_text": "500 Beast Coins + 1x Mystery Key",
+      "icon_url": "",
+      "sort_order": 2,
+      "is_active": 1,
+      "created_at": "2026-10-20T15:45:36.482Z",
+      "updated_at": "2026-10-20T15:45:36.482Z"
+    },
+    {
+      "id": 3,
+      "name": "Planet Minecraft",
+      "url": "https://www.planetminecraft.com/",
+      "description": "Drop a diamond and vote on Planet Minecraft for exclusive chat cosmetics and coins.",
+      "reward_text": "750 Beast Coins + 2x Vote Keys",
+      "icon_url": "",
+      "sort_order": 3,
+      "is_active": 1,
+      "created_at": "2026-10-20T15:45:36.482Z",
+      "updated_at": "2026-10-20T15:45:36.482Z"
+    },
+    {
+      "id": 4,
+      "name": "Minecraft Server List (MSL)",
+      "url": "https://minecraft-server-list.com/",
+      "description": "Cast your vote every 24 hours on MSL and earn automatic rewards delivered to your inventory.",
+      "reward_text": "500 Beast Coins + 1x Rare Crate Key",
+      "icon_url": "",
+      "sort_order": 4,
+      "is_active": 1,
+      "created_at": "2026-10-20T15:45:36.482Z",
+      "updated_at": "2026-10-20T15:45:36.482Z"
+    }
+  ]
+}
