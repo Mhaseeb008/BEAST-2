@@ -29,7 +29,7 @@ interface PlayerDashboardPageProps {
 }
 
 export const PlayerDashboardPage: React.FC<PlayerDashboardPageProps> = ({ setCurrentTab }) => {
-  const { user, token, updateProfile } = useAuth();
+  const { user, token, updateProfile, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -79,6 +79,17 @@ export const PlayerDashboardPage: React.FC<PlayerDashboardPageProps> = ({ setCur
       setSavingIgn(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="max-w-md mx-auto py-24 px-4 text-center space-y-4">
+        <RefreshCw className="w-8 h-8 text-emerald-400 animate-spin mx-auto" />
+        <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">
+          Loading player profile...
+        </p>
+      </div>
+    );
+  }
 
   if (!user) {
     return (

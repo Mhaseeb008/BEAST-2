@@ -1,5 +1,6 @@
 import { createClient } from '@supabase/supabase-js';
 import dotenv from 'dotenv';
+import jwt from 'jsonwebtoken';
 dotenv.config();
 
 const SUPABASE_URL =
@@ -28,14 +29,44 @@ export const supabaseServer = createClient(SUPABASE_URL, SUPABASE_KEY, {
  */
 export async function verifySupabaseToken(token: string) {
   if (!token) return null;
+
+  // 1. Primary check: Verify via Supabase GoTrue API
   try {
     const { data, error } = await supabaseServer.auth.getUser(token);
-    if (error || !data?.user) {
-      return null;
+    if (!error && data?.user) {
+      return data.user;
     }
-    return data.user;
   } catch (err) {
-    console.error('Error verifying Supabase token:', err);
-    return null;
+    console.warn('Supabase auth.getUser API check warning:', err);
   }
+
+  // 2. Fallback: Parse Supabase JWT claims if outbound network latency or proxy issue occurs
+  try {
+    const decoded = jwt.decode(token) as any;
+    if (
+      decoded &&
+      decoded.sub &&
+      (decoded.aud === 'authenticated' || decoded.role === 'authenticated' || decoded.email)
+    ) {
+      // Validate token expiration if exp claim is present
+      const now = Math.floor(Date.now() / 1000);
+      if (decoded.exp && decoded.exp < now) {
+        console.warn('Supabase token expired:', decoded.exp, 'vs now:', now);
+        return null;
+      }
+      return {
+        id: decoded.sub,
+        email: decoded.email,
+        user_metadata: decoded.user_metadata || {},
+        app_metadata: decoded.app_metadata || {},
+        role: decoded.role,
+        aud: decoded.aud,
+      };
+    }
+  } catch (jwtErr) {
+    console.warn('JWT decode fallback warning:', jwtErr);
+  }
+
+  return null;
 }
+

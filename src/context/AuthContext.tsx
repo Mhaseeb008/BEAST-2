@@ -41,7 +41,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           'Content-Type': 'application/json',
           Authorization: `Bearer ${supabaseToken}`,
         },
-        body: JSON.stringify(extraData || {}),
+        body: JSON.stringify({
+          token: supabaseToken,
+          ...(extraData || {}),
+        }),
       });
 
       if (res.ok) {
@@ -50,14 +53,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         localStorage.setItem('beastmc_token', activeToken);
         setToken(activeToken);
         setUser(data.user);
+        setLoading(false);
         return data.user;
       } else {
+        const errText = await res.text().catch(() => '');
+        console.warn('Sync responded with status:', res.status, errText);
         // Fallback to /api/auth/me if sync fails
         await fetchCurrentUser(supabaseToken);
       }
     } catch (err) {
       console.error('Failed to sync user with backend:', err);
       await fetchCurrentUser(supabaseToken);
+    } finally {
+      setLoading(false);
     }
   };
 

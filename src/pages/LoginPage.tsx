@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.tsx';
-import { Shield, Lock, Mail, ArrowRight, AlertCircle, Key, CheckCircle, RefreshCw, X, Sparkles } from 'lucide-react';
+import { Shield, Lock, Mail, ArrowRight, AlertCircle, Key, CheckCircle, RefreshCw, X, Sparkles, Crown, LogOut, User as UserIcon } from 'lucide-react';
 
 interface LoginPageProps {
   setCurrentTab: (tab: string) => void;
@@ -8,7 +8,7 @@ interface LoginPageProps {
 }
 
 export const LoginPage: React.FC<LoginPageProps> = ({ setCurrentTab, onSuccessRedirect }) => {
-  const { login, loginWithGoogle, forgotPassword, resetPassword, resendVerification, bootstrapOwner, user } = useAuth();
+  const { login, loginWithGoogle, forgotPassword, resetPassword, resendVerification, bootstrapOwner, logout, user, loading: authLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -195,8 +195,85 @@ export const LoginPage: React.FC<LoginPageProps> = ({ setCurrentTab, onSuccessRe
           </div>
         )}
 
-        {/* Password Reset Form Mode */}
-        {isResetMode ? (
+        {/* If user is already authenticated */}
+        {user && !isResetMode ? (
+          <div className="space-y-4 py-2">
+            <div className="p-4 bg-emerald-950/60 border border-emerald-500/40 rounded-2xl space-y-3">
+              <div className="flex items-center gap-2 text-emerald-400 text-sm font-bold">
+                <CheckCircle className="w-5 h-5 text-emerald-400 shrink-0" />
+                <span>Currently Signed In</span>
+              </div>
+              <div className="text-xs text-slate-300">
+                You are authenticated as <strong className="text-white">{user.username}</strong> ({user.email}).
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[11px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                  Role: {user.role}
+                </span>
+                {user.minecraftUsername && (
+                  <span className="text-[11px] text-slate-400 font-mono">
+                    IGN: {user.minecraftUsername}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setCurrentTab('dashboard')}
+                className="py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg shadow-emerald-950 transition-all flex items-center justify-center gap-2"
+              >
+                <span>Dashboard</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCurrentTab('orders')}
+                className="py-3 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow transition-all flex items-center justify-center gap-2"
+              >
+                <span>My Orders</span>
+              </button>
+            </div>
+
+            {/* Owner action / setup */}
+            {(user.role === 'owner' || user.email.toLowerCase() === 'mhaseebahmed0@gmail.com') && (
+              <div className="pt-1">
+                {user.role === 'owner' ? (
+                  <button
+                    type="button"
+                    onClick={() => setCurrentTab('admin')}
+                    className="w-full py-3 bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-white font-bold text-xs uppercase tracking-wider rounded-xl shadow-lg transition-all flex items-center justify-center gap-2"
+                  >
+                    <Crown className="w-4 h-4" />
+                    <span>Open Owner Admin Panel</span>
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setShowBootstrapModal(true)}
+                    className="w-full py-2.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/40 font-bold text-xs uppercase tracking-wider rounded-xl shadow transition-all flex items-center justify-center gap-2"
+                  >
+                    <Crown className="w-4 h-4" />
+                    <span>Complete Owner Privilege Setup</span>
+                  </button>
+                )}
+              </div>
+            )}
+
+            <div className="pt-2 border-t border-slate-800 text-center">
+              <button
+                type="button"
+                onClick={logout}
+                className="text-xs text-slate-400 hover:text-red-400 flex items-center justify-center gap-1.5 mx-auto transition-colors"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Sign Out / Switch Account</span>
+              </button>
+            </div>
+          </div>
+        ) : isResetMode ? (
           <form onSubmit={handleResetPasswordSubmit} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1">

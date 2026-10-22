@@ -9,7 +9,7 @@ export const users = pgTable('users', {
   username: text('username').notNull(),
   minecraftUsername: text('minecraft_username').notNull(),
   passwordHash: text('password_hash'),
-  role: text('role').notNull().default('player'), // 'player', 'moderator', 'admin', 'owner'
+  role: text('role').notNull().default('user'), // 'user', 'player', 'moderator', 'admin', 'owner'
   permissions: text('permissions').default('[]'), // JSON array of permission strings
   isBanned: integer('is_banned').default(0),
   createdAt: timestamp('created_at').defaultNow(),

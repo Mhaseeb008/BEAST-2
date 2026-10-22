@@ -5,7 +5,7 @@ export interface User {
   email: string;
   username: string;
   minecraftUsername: string;
-  role: 'player' | 'moderator' | 'admin' | 'owner';
+  role: 'user' | 'player' | 'moderator' | 'admin' | 'owner';
   permissions: string[];
   isBanned?: number;
   createdAt?: string;

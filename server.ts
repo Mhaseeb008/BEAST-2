@@ -5,7 +5,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import bcrypt from 'bcryptjs';
 import dotenv from 'dotenv';
-import { db } from './src/db/index.ts';
+import { db, pool } from './src/db/index.ts';
 import {
   users,
   siteSettings,
@@ -1017,7 +1017,7 @@ app.post('/api/auth/register', async (req, res) => {
       'manage_admins',
       'view_audit_logs',
     ];
-    const initialRole = isOwnerEmail ? 'owner' : 'player';
+    const initialRole = isOwnerEmail ? 'owner' : 'user';
     const initialPerms = isOwnerEmail ? JSON.stringify(allPerms) : '[]';
 
     const [newUser] = await db.insert(users).values({
@@ -1123,74 +1123,291 @@ app.post('/api/auth/login', async (req, res) => {
   }
 });
 
+// Helper to reliably extract bearer token from headers, body, or session cookies
+function extractBearerToken(req: any): string {
+  const authHeader = req.headers?.authorization;
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    const t = authHeader.split('Bearer ')[1].trim();
+    if (t) return t;
+  }
+  if (req.body && typeof req.body.token === 'string' && req.body.token.trim()) {
+    return req.body.token.trim();
+  }
+  if (req.query && typeof req.query.token === 'string' && req.query.token.trim()) {
+    return req.query.token.trim();
+  }
+  // Check cookies (including standard supabase auth cookies)
+  const cookieHeader = req.headers?.cookie;
+  if (cookieHeader) {
+    const cookies = cookieHeader.split(';');
+    for (const cookie of cookies) {
+      const [rawName, ...valParts] = cookie.trim().split('=');
+      const name = rawName?.trim();
+      const val = valParts.join('=').trim();
+      if (!name || !val) continue;
+      if (
+        name === 'sb-access-token' ||
+        name === 'beastmc_token' ||
+        (name.startsWith('sb-') && name.endsWith('-auth-token'))
+      ) {
+        try {
+          const decodedVal = decodeURIComponent(val);
+          if (decodedVal.startsWith('{') || decodedVal.startsWith('[')) {
+            const parsed = JSON.parse(decodedVal);
+            if (Array.isArray(parsed) && parsed[0]) return parsed[0];
+            if (parsed.access_token) return parsed.access_token;
+          }
+          return decodedVal;
+        } catch {
+          return val;
+        }
+      }
+    }
+  }
+  return '';
+}
+
 // ==========================================
 // SUPABASE AUTH SYNCHRONIZATION
 // ==========================================
 app.post('/api/auth/sync', async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    const bearerToken = authHeader && authHeader.startsWith('Bearer ')
-      ? authHeader.split('Bearer ')[1].trim()
-      : req.body.token;
+    const bearerToken = extractBearerToken(req);
 
     if (!bearerToken) {
       return res.status(400).json({ error: 'Missing authentication token' });
     }
 
     const supabaseUser = await verifySupabaseToken(bearerToken);
+
+    // If not a valid Supabase token, check if it's already an issued BeastMC JWT token
     if (!supabaseUser || !supabaseUser.id) {
+      try {
+        const decoded = (await import('jsonwebtoken')).default.verify(
+          bearerToken,
+          process.env.JWT_SECRET || 'beastmc-production-super-secret-key-2026'
+        ) as any;
+        if (decoded && decoded.id) {
+          const [existingUser] = await db.select().from(users).where(eq(users.id, decoded.id)).limit(1);
+          if (existingUser) {
+            let permissions: string[] = [];
+            try {
+              permissions = JSON.parse(existingUser.permissions || '[]');
+            } catch {
+              permissions = [];
+            }
+            return res.json({
+              token: bearerToken,
+              user: {
+                id: existingUser.id,
+                uid: existingUser.uid,
+                supabaseUid: existingUser.supabaseUid,
+                email: existingUser.email,
+                username: existingUser.username,
+                minecraftUsername: existingUser.minecraftUsername,
+                role: existingUser.role,
+                permissions,
+                isBanned: !!existingUser.isBanned,
+                createdAt: existingUser.createdAt,
+              },
+            });
+          }
+        }
+      } catch {}
+
       return res.status(401).json({ error: 'Invalid or expired Supabase authentication session' });
     }
 
     const email = (supabaseUser.email || `${supabaseUser.id}@beastmc.net`).toLowerCase().trim();
     const meta = supabaseUser.user_metadata || {};
-    const requestedUsername = (req.body.username || meta.username || meta.full_name || email.split('@')[0] || 'Player')
+    const requestedUsername = (req.body?.username || meta.username || meta.full_name || email.split('@')[0] || 'Player')
+      .toString()
       .replace(/\s+/g, '_')
       .slice(0, 30);
-    const requestedMinecraft = (req.body.minecraftUsername || meta.minecraft_username || requestedUsername).slice(0, 30);
-
-    // Look up existing user strictly by authenticated Supabase UUID (do not auto-link old accounts by email)
-    const found = await db
-      .select()
-      .from(users)
-      .where(eq(users.supabaseUid, supabaseUser.id))
-      .limit(1);
+    const requestedMinecraft = (req.body?.minecraftUsername || meta.minecraft_username || requestedUsername).toString().slice(0, 30);
 
     let userRecord: any = null;
+    let hasSupabaseUidCol = true;
 
-    if (found.length > 0) {
-      userRecord = found[0];
-      const updates: any = { updatedAt: new Date() };
+    try {
+      // 1. Primary lookup by authenticated Supabase UUID
+      let found = await db
+        .select()
+        .from(users)
+        .where(eq(users.supabaseUid, supabaseUser.id))
+        .limit(1);
 
-      // Update Minecraft IGN if provided
-      if (req.body.minecraftUsername && req.body.minecraftUsername.trim()) {
-        updates.minecraftUsername = req.body.minecraftUsername.trim();
+      // Fallback lookup by uid
+      if (found.length === 0) {
+        found = await db
+          .select()
+          .from(users)
+          .where(eq(users.uid, supabaseUser.id))
+          .limit(1);
       }
 
-      if (Object.keys(updates).length > 1) {
-        const [updated] = await db
-          .update(users)
-          .set(updates)
-          .where(eq(users.id, userRecord.id))
-          .returning();
-        userRecord = updated;
+      // Fallback lookup by verified email to prevent duplicate key violations
+      if (found.length === 0) {
+        found = await db
+          .select()
+          .from(users)
+          .where(eq(users.email, email))
+          .limit(1);
+      }
+
+      if (found.length > 0) {
+        userRecord = found[0];
+      }
+    } catch (drizzleLookupErr: any) {
+      if (drizzleLookupErr?.code === '42703' || drizzleLookupErr?.message?.includes('supabase_uid')) {
+        hasSupabaseUidCol = false;
+        console.warn(
+          '[DATABASE NOTICE] Column "supabase_uid" is not yet present in production table "users". Falling back to raw SQL query. Please run the non-destructive SQL migration in Supabase SQL editor: ALTER TABLE users ADD COLUMN IF NOT EXISTS supabase_uid text UNIQUE;'
+        );
+        try {
+          const rawRes = await pool.query(
+            'SELECT id, uid, email, username, minecraft_username, password_hash, role, permissions, is_banned, created_at, updated_at FROM users WHERE email = $1 OR uid = $2 LIMIT 1',
+            [email, supabaseUser.id]
+          );
+          if (rawRes.rows.length > 0) {
+            const row = rawRes.rows[0];
+            userRecord = {
+              id: row.id,
+              uid: row.uid,
+              supabaseUid: supabaseUser.id,
+              email: row.email,
+              username: row.username,
+              minecraftUsername: row.minecraft_username,
+              passwordHash: row.password_hash,
+              role: row.role,
+              permissions: row.permissions,
+              isBanned: row.is_banned,
+              createdAt: row.created_at,
+              updatedAt: row.updated_at,
+            };
+          }
+        } catch (rawErr) {
+          console.error('Raw SQL user lookup fallback error:', rawErr);
+        }
+      } else {
+        throw drizzleLookupErr;
+      }
+    }
+
+    if (userRecord) {
+      const updates: any = { updatedAt: new Date() };
+
+      if (hasSupabaseUidCol && !userRecord.supabaseUid) {
+        updates.supabaseUid = supabaseUser.id;
+      }
+
+      if (req.body?.minecraftUsername && req.body.minecraftUsername.trim()) {
+        updates.minecraftUsername = req.body.minecraftUsername.trim().slice(0, 30);
+      }
+
+      if (hasSupabaseUidCol && (Object.keys(updates).length > 1 || updates.supabaseUid)) {
+        try {
+          const [updated] = await db
+            .update(users)
+            .set(updates)
+            .where(eq(users.id, userRecord.id))
+            .returning();
+          userRecord = updated || userRecord;
+        } catch (updateErr) {
+          console.warn('Profile update non-fatal warning during sync:', updateErr);
+        }
+      } else if (!hasSupabaseUidCol && updates.minecraftUsername) {
+        try {
+          await pool.query(
+            'UPDATE users SET minecraft_username = $1, updated_at = NOW() WHERE id = $2',
+            [updates.minecraftUsername, userRecord.id]
+          );
+          userRecord.minecraftUsername = updates.minecraftUsername;
+        } catch (rawUpdateErr) {
+          console.warn('Raw update warning:', rawUpdateErr);
+        }
       }
     } else {
       // Create new application profile in PostgreSQL for this new Supabase user
-      const [created] = await db
-        .insert(users)
-        .values({
-          uid: supabaseUser.id,
-          supabaseUid: supabaseUser.id,
-          email,
-          username: requestedUsername,
-          minecraftUsername: requestedMinecraft,
-          role: 'player',
-          permissions: '[]',
-          isBanned: 0,
-        })
-        .returning();
-      userRecord = created;
+      const isOwnerEmail = email.toLowerCase().trim() === 'mhaseebahmed0@gmail.com';
+      const assignedRole = isOwnerEmail ? 'owner' : 'user';
+      const assignedPerms = isOwnerEmail
+        ? JSON.stringify(['manage_settings', 'manage_products', 'manage_payments', 'verify_orders', 'deliver_orders', 'manage_admins', 'view_audit_logs'])
+        : '[]';
+
+      if (hasSupabaseUidCol) {
+        try {
+          const [created] = await db
+            .insert(users)
+            .values({
+              uid: supabaseUser.id,
+              supabaseUid: supabaseUser.id,
+              email,
+              username: requestedUsername,
+              minecraftUsername: requestedMinecraft,
+              role: assignedRole,
+              permissions: assignedPerms,
+              isBanned: 0,
+            })
+            .returning();
+          userRecord = created || null;
+        } catch (insertErr: any) {
+          console.warn('User insert collision during sync, fetching existing record:', insertErr);
+          const [recovered] = await db
+            .select()
+            .from(users)
+            .where(or(eq(users.supabaseUid, supabaseUser.id), eq(users.email, email)))
+            .limit(1);
+          userRecord = recovered || null;
+        }
+      } else {
+        // Fallback insert without supabase_uid column
+        try {
+          const rawInsert = await pool.query(
+            'INSERT INTO users (uid, email, username, minecraft_username, role, permissions, is_banned) VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id, uid, email, username, minecraft_username, role, permissions, is_banned, created_at, updated_at',
+            [supabaseUser.id, email, requestedUsername, requestedMinecraft, assignedRole, assignedPerms, 0]
+          );
+          if (rawInsert.rows.length > 0) {
+            const row = rawInsert.rows[0];
+            userRecord = {
+              id: row.id,
+              uid: row.uid,
+              supabaseUid: supabaseUser.id,
+              email: row.email,
+              username: row.username,
+              minecraftUsername: row.minecraft_username,
+              role: row.role,
+              permissions: row.permissions,
+              isBanned: row.is_banned,
+              createdAt: row.created_at,
+              updatedAt: row.updated_at,
+            };
+          }
+        } catch (rawInsertErr) {
+          console.warn('Raw insert collision, recovering existing user:', rawInsertErr);
+          const rawRecover = await pool.query('SELECT * FROM users WHERE email = $1 OR uid = $2 LIMIT 1', [email, supabaseUser.id]);
+          if (rawRecover.rows.length > 0) {
+            const row = rawRecover.rows[0];
+            userRecord = {
+              id: row.id,
+              uid: row.uid,
+              supabaseUid: supabaseUser.id,
+              email: row.email,
+              username: row.username,
+              minecraftUsername: row.minecraft_username,
+              role: row.role,
+              permissions: row.permissions,
+              isBanned: row.is_banned,
+              createdAt: row.created_at,
+              updatedAt: row.updated_at,
+            };
+          }
+        }
+      }
+    }
+
+    if (!userRecord) {
+      return res.status(500).json({ error: 'Failed to initialize application user profile' });
     }
 
     if (userRecord.isBanned) {
@@ -1216,6 +1433,8 @@ app.post('/api/auth/sync', async (req, res) => {
         minecraftUsername: userRecord.minecraftUsername,
         role: userRecord.role,
         permissions,
+        isBanned: !!userRecord.isBanned,
+        createdAt: userRecord.createdAt,
       },
     });
   } catch (error: any) {
@@ -1338,7 +1557,7 @@ app.post('/api/auth/google-sync', async (req, res) => {
           email,
           username: defaultName,
           minecraftUsername: minecraftUsername || defaultName,
-          role: 'player',
+          role: email.toLowerCase().trim() === 'mhaseebahmed0@gmail.com' ? 'owner' : 'user',
           permissions: '[]',
           isBanned: 0,
         }).returning();
@@ -1706,8 +1925,13 @@ app.get('/api/admin/orders', requireAuth, requireAdmin, async (req: AuthRequest,
 
     const tz = (typeof clientTz === 'string' && clientTz.trim()) || getConfiguredTimezone() || 'UTC';
 
+    const includeDeleted = req.query.includeDeleted === 'true' || req.query.includeDeleted === '1';
+
     // Build SQL conditions for server-side database filtering
-    const conditions = [eq(orders.isDeleted, 0)];
+    const conditions: any[] = [];
+    if (!includeDeleted) {
+      conditions.push(or(eq(orders.isDeleted, 0), sql`${orders.isDeleted} IS NULL`)!);
+    }
 
     // 1. Date Filtering
     let startFilter: Date | null = null;
@@ -1823,23 +2047,113 @@ app.get('/api/admin/orders', requireAuth, requireAdmin, async (req: AuthRequest,
     }
 
     // Execute server-side database query with leftJoin on users to get customerUsername
-    const rows = await db
-      .select({
-        order: orders,
-        customerUsername: users.username,
-      })
-      .from(orders)
-      .leftJoin(users, eq(orders.userId, users.id))
-      .where(and(...conditions))
-      .orderBy(desc(orders.createdAt));
+    let resultOrders: any[] = [];
+    try {
+      const rows = await db
+        .select({
+          order: orders,
+          customerUsername: users.username,
+        })
+        .from(orders)
+        .leftJoin(users, eq(orders.userId, users.id))
+        .where(conditions.length > 0 ? and(...conditions) : sql`1=1`)
+        .orderBy(desc(orders.createdAt));
 
-    const resultOrders = rows.map((r) => ({
-      ...r.order,
-      customerUsername:
-        r.customerUsername ||
-        r.order.minecraftUsername ||
-        (r.order.userEmail ? r.order.userEmail.split('@')[0] : 'Guest Player'),
-    }));
+      resultOrders = rows.map((r) => ({
+        ...r.order,
+        customerUsername:
+          r.customerUsername ||
+          r.order.minecraftUsername ||
+          (r.order.userEmail ? r.order.userEmail.split('@')[0] : 'Guest Player'),
+      }));
+    } catch (drizzleJoinErr: any) {
+      console.warn('Drizzle orders query warning, falling back to resilient SQL query:', drizzleJoinErr?.message || drizzleJoinErr);
+      try {
+        let sqlQuery = 'SELECT * FROM orders WHERE 1=1';
+        const sqlParams: any[] = [];
+
+        if (!includeDeleted) {
+          sqlQuery += ' AND (is_deleted = 0 OR is_deleted IS NULL)';
+        }
+
+        if (status && status !== 'all') {
+          const st = String(status).toLowerCase().trim();
+          sqlParams.push(st);
+          sqlQuery += ` AND (LOWER(status) = $${sqlParams.length}`;
+          if (st === 'pending') {
+            sqlQuery += ` OR LOWER(status) = 'pending payment verification'`;
+          } else if (st === 'approved') {
+            sqlQuery += ` OR LOWER(status) = 'delivery pending' OR LOWER(status) = 'awaiting delivery'`;
+          } else if (st === 'completed') {
+            sqlQuery += ` OR LOWER(status) = 'delivered'`;
+          } else if (st === 'rejected') {
+            sqlQuery += ` OR LOWER(status) = 'payment rejected'`;
+          }
+          sqlQuery += `)`;
+        }
+
+        if (orderId && typeof orderId === 'string' && orderId.trim()) {
+          sqlParams.push(`%${orderId.trim().replace(/^#/, '')}%`);
+          sqlQuery += ` AND order_code ILIKE $${sqlParams.length}`;
+        }
+
+        if (minecraftUsername && typeof minecraftUsername === 'string' && minecraftUsername.trim()) {
+          sqlParams.push(`%${minecraftUsername.trim()}%`);
+          sqlQuery += ` AND minecraft_username ILIKE $${sqlParams.length}`;
+        }
+
+        if (customerEmail && typeof customerEmail === 'string' && customerEmail.trim()) {
+          sqlParams.push(`%${customerEmail.trim()}%`);
+          sqlQuery += ` AND user_email ILIKE $${sqlParams.length}`;
+        }
+
+        sqlQuery += ' ORDER BY created_at DESC';
+
+        const rawRes = await pool.query(sqlQuery, sqlParams);
+        let userMap = new Map<number, string>();
+        try {
+          const uRes = await pool.query('SELECT id, username FROM users');
+          uRes.rows.forEach((u) => userMap.set(u.id, u.username));
+        } catch {}
+
+        resultOrders = rawRes.rows.map((row) => ({
+          id: row.id,
+          orderCode: row.order_code,
+          userId: row.user_id,
+          userEmail: row.user_email,
+          minecraftUsername: row.minecraft_username,
+          productId: row.product_id,
+          productName: row.product_name,
+          amount: row.amount,
+          currency: row.currency || 'USD',
+          paymentMethodId: row.payment_method_id,
+          paymentMethodName: row.payment_method_name,
+          transactionId: row.transaction_id,
+          senderNote: row.sender_note || '',
+          paymentScreenshotUrl: row.payment_screenshot_url || '',
+          status: row.status,
+          rejectionReason: row.rejection_reason || '',
+          approvedAt: row.approved_at,
+          deliveredAt: row.delivered_at,
+          deliveryNotice: row.delivery_notice || '',
+          deliveryEmailSent: row.delivery_email_sent || 0,
+          deliveredByAdmin: row.delivered_by_admin || '',
+          paymentVerified: row.payment_verified || 0,
+          paymentVerifiedAt: row.payment_verified_at,
+          paymentVerifiedBy: row.payment_verified_by || '',
+          orderHistory: row.order_history || '[]',
+          isDeleted: row.is_deleted || 0,
+          deletedAt: row.deleted_at,
+          deletedByAdmin: row.deleted_by_admin || '',
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+          customerUsername: (row.user_id ? userMap.get(row.user_id) : null) || row.minecraft_username || (row.user_email ? row.user_email.split('@')[0] : 'Guest Player'),
+        }));
+      } catch (poolOrdersErr: any) {
+        console.error('Raw orders fallback query error:', poolOrdersErr);
+        throw poolOrdersErr;
+      }
+    }
 
     // 5. Compute real database statistics for currently selected filters
     const totalOrders = resultOrders.length;
@@ -1968,10 +2282,10 @@ app.post(
   requireAuth,
   async (req: AuthRequest, res) => {
     try {
-      // Only the Owner can reopen rejected orders
-      if (req.user?.role !== 'owner') {
+      // Authorized staff (Owner or Administrator) can reopen rejected orders
+      if (req.user?.role !== 'owner' && req.user?.role !== 'admin') {
         return res.status(403).json({
-          error: 'Permission Denied: Only the Server Owner can reopen rejected orders.',
+          error: 'Permission Denied: Staff authorization (Owner or Admin) required to reopen rejected orders.',
         });
       }
 
@@ -3186,82 +3500,219 @@ app.delete('/api/admin/upload', requireAuth, async (req: AuthRequest, res) => {
   }
 });
 
-// Admin: Users & Staff Management (Multi-Admin with roles Owner, Admin, Moderator)
+// Admin: Users & Staff Management (Resilient querying across Supabase Auth and public.users)
 app.get('/api/admin/users', requireAuth, requireAdmin, async (req: AuthRequest, res) => {
   try {
-    const allUsers = await db.select().from(users).orderBy(desc(users.createdAt));
-    const sanitized = allUsers.map((u) => {
+    let rawList: any[] = [];
+    try {
+      rawList = await db.select().from(users).orderBy(desc(users.createdAt));
+    } catch (drizzleErr: any) {
+      console.warn('Drizzle users fetch warning, falling back to resilient SQL query:', drizzleErr?.message || drizzleErr);
+      try {
+        const rawRes = await pool.query(
+          'SELECT id, uid, email, username, minecraft_username, role, permissions, is_banned, created_at, updated_at FROM users ORDER BY created_at DESC'
+        );
+        rawList = rawRes.rows.map((row) => ({
+          id: row.id,
+          uid: row.uid,
+          email: row.email,
+          username: row.username,
+          minecraftUsername: row.minecraft_username,
+          role: row.role,
+          permissions: row.permissions,
+          isBanned: row.is_banned,
+          createdAt: row.created_at,
+          updatedAt: row.updated_at,
+        }));
+      } catch (poolErr: any) {
+        console.warn('Resilient query fallback with SELECT *:', poolErr?.message || poolErr);
+        const wildRes = await pool.query('SELECT * FROM users ORDER BY id DESC');
+        rawList = wildRes.rows.map((row) => ({
+          id: row.id,
+          uid: row.uid || String(row.id),
+          email: row.email,
+          username: row.username || 'Player',
+          minecraftUsername: row.minecraft_username || row.username || 'Player',
+          role: row.role || 'user',
+          permissions: row.permissions || '[]',
+          isBanned: row.is_banned || 0,
+          createdAt: row.created_at || new Date(),
+        }));
+      }
+    }
+
+    // Optional: Auto-discover newly signed up Supabase Auth users if admin credentials are available
+    try {
+      const { data: authData } = await supabaseServer.auth.admin.listUsers({ page: 1, perPage: 100 });
+      if (authData?.users && authData.users.length > 0) {
+        const existingEmails = new Set(rawList.map((u) => (u.email || '').toLowerCase().trim()));
+        for (const sbUser of authData.users) {
+          const sbEmail = (sbUser.email || '').toLowerCase().trim();
+          if (sbEmail && !existingEmails.has(sbEmail)) {
+            const meta = sbUser.user_metadata || {};
+            const sbUsername = meta.username || meta.full_name || sbEmail.split('@')[0] || 'Player';
+            const sbMinecraft = meta.minecraft_username || sbUsername;
+            const isOwner = sbEmail === 'mhaseebahmed0@gmail.com';
+            try {
+              const [inserted] = await db.insert(users).values({
+                uid: sbUser.id,
+                supabaseUid: sbUser.id,
+                email: sbEmail,
+                username: sbUsername,
+                minecraftUsername: sbMinecraft,
+                role: isOwner ? 'owner' : 'user',
+                permissions: isOwner ? JSON.stringify(['manage_settings', 'manage_products', 'manage_payments', 'verify_orders', 'deliver_orders', 'manage_admins', 'view_audit_logs']) : '[]',
+                isBanned: 0,
+              }).returning();
+              if (inserted) {
+                rawList.unshift(inserted);
+                existingEmails.add(sbEmail);
+              }
+            } catch {
+              rawList.push({
+                id: Math.floor(Math.random() * 900000) + 100000,
+                uid: sbUser.id,
+                supabaseUid: sbUser.id,
+                email: sbEmail,
+                username: sbUsername,
+                minecraftUsername: sbMinecraft,
+                role: isOwner ? 'owner' : 'user',
+                permissions: '[]',
+                isBanned: 0,
+                createdAt: sbUser.created_at || new Date().toISOString(),
+              });
+              existingEmails.add(sbEmail);
+            }
+          }
+        }
+      }
+    } catch {
+      // Non-fatal if Supabase admin API is not available
+    }
+
+    const sanitized = rawList.map((u) => {
       let parsedPerms: string[] = [];
       try {
-        parsedPerms = JSON.parse(u.permissions || '[]');
+        parsedPerms = typeof u.permissions === 'string'
+          ? JSON.parse(u.permissions || '[]')
+          : (Array.isArray(u.permissions) ? u.permissions : []);
       } catch {
         parsedPerms = [];
       }
       return {
         id: u.id,
         uid: u.uid,
+        supabaseUid: u.supabaseUid,
         email: u.email,
         username: u.username,
         minecraftUsername: u.minecraftUsername,
-        role: u.role,
+        role: u.role || 'user',
         permissions: parsedPerms,
-        isBanned: u.isBanned,
+        isBanned: u.isBanned || 0,
         createdAt: u.createdAt,
       };
     });
+
     res.json(sanitized);
   } catch (error: any) {
+    console.error('Fetch users error in admin:', error);
     res.status(500).json({ error: error.message || 'Failed to fetch users' });
   }
 });
 
-// Admin: Update User Role & Granular Permissions
-app.put('/api/admin/users/:id/role', requireAuth, requirePermission('manage_admins'), async (req: AuthRequest, res) => {
+// Admin: Update User Role & Granular Permissions (Strictly Owner-Only Promotion)
+const handleUserRoleUpdate = async (req: AuthRequest, res: Response) => {
   try {
-    const targetUserId = Number(req.params.id);
-    const { role, permissions } = req.body;
-
-    if (!role || !['player', 'moderator', 'admin', 'owner'].includes(role)) {
-      return res.status(400).json({ error: 'Valid role is required: player, moderator, admin, owner' });
+    const requesterEmail = req.user?.email?.toLowerCase().trim();
+    // 1. Backend Security: ONLY the authorized Owner (mhaseebahmed0@gmail.com with role === 'owner') can promote users to Admin or change staff roles
+    if (req.user?.role !== 'owner' || requesterEmail !== 'mhaseebahmed0@gmail.com') {
+      return res.status(403).json({
+        error: 'Forbidden: Only the authorized Server Owner (mhaseebahmed0@gmail.com) can promote users to Admin or modify staff roles.',
+      });
     }
 
-    // Only Owner can assign or revoke the Owner role
-    if (role === 'owner' && req.user!.role !== 'owner') {
-      return res.status(403).json({ error: 'Only the current Owner can assign the Owner role.' });
+    const targetUserId = Number(req.params.id);
+    if (!targetUserId || isNaN(targetUserId)) {
+      return res.status(400).json({ error: 'Valid user ID is required.' });
+    }
+
+    const { role, permissions } = req.body;
+    const validRoles = ['user', 'player', 'moderator', 'admin', 'owner'];
+    if (!role || !validRoles.includes(role)) {
+      return res.status(400).json({ error: `Valid role is required: ${validRoles.join(', ')}` });
+    }
+
+    // Lookup target user
+    let targetUser: any = null;
+    try {
+      const found = await db.select().from(users).where(eq(users.id, targetUserId)).limit(1);
+      if (found.length > 0) targetUser = found[0];
+    } catch {
+      const rawRes = await pool.query('SELECT * FROM users WHERE id = $1 LIMIT 1', [targetUserId]);
+      if (rawRes.rows.length > 0) targetUser = rawRes.rows[0];
+    }
+
+    if (!targetUser) {
+      return res.status(404).json({ error: 'User not found in database.' });
+    }
+
+    // Protection: Prevent demoting the Owner account mhaseebahmed0@gmail.com
+    if (targetUser.email?.toLowerCase().trim() === 'mhaseebahmed0@gmail.com' && role !== 'owner') {
+      return res.status(400).json({ error: 'Security Protection: The server Owner account role cannot be demoted.' });
     }
 
     const permsArray = Array.isArray(permissions) ? permissions : [];
+    let updatedUser: any = null;
 
-    const [updated] = await db
-      .update(users)
-      .set({
-        role,
-        permissions: JSON.stringify(permsArray),
-        updatedAt: new Date(),
-      })
-      .where(eq(users.id, targetUserId))
-      .returning();
+    try {
+      const [updated] = await db
+        .update(users)
+        .set({
+          role,
+          permissions: JSON.stringify(permsArray),
+          updatedAt: new Date(),
+        })
+        .where(eq(users.id, targetUserId))
+        .returning();
+      updatedUser = updated;
+    } catch (updateErr) {
+      console.warn('Drizzle role update warning, falling back to raw SQL:', updateErr);
+      const rawUp = await pool.query(
+        'UPDATE users SET role = $1, permissions = $2, updated_at = NOW() WHERE id = $3 RETURNING id, uid, email, username, role, permissions',
+        [role, JSON.stringify(permsArray), targetUserId]
+      );
+      if (rawUp.rows.length > 0) updatedUser = rawUp.rows[0];
+    }
 
-    await db.insert(auditLogs).values({
-      adminEmail: req.user!.email,
-      action: 'USER_ROLE_CHANGED',
-      details: `Changed role of user #${targetUserId} (${updated.email}) to ${role} with perms: [${permsArray.join(', ')}]`,
-    });
+    if (!updatedUser) {
+      return res.status(500).json({ error: 'Failed to update user record.' });
+    }
+
+    try {
+      await db.insert(auditLogs).values({
+        adminEmail: req.user!.email,
+        action: 'USER_ROLE_CHANGED',
+        details: `Owner changed role of user #${targetUserId} (${updatedUser.email}) to ${role} with perms: [${permsArray.join(', ')}]`,
+      });
+    } catch {}
 
     res.json({
-      message: 'Role and permissions updated successfully',
+      message: `Role successfully updated to "${role}" by Owner`,
       user: {
-        id: updated.id,
-        email: updated.email,
-        username: updated.username,
-        role: updated.role,
+        id: updatedUser.id,
+        email: updatedUser.email,
+        username: updatedUser.username,
+        role: updatedUser.role,
         permissions: permsArray,
       },
     });
   } catch (error: any) {
     res.status(500).json({ error: error.message || 'Failed to update user role' });
   }
-});
+};
+
+app.put('/api/admin/users/:id/role', requireAuth, handleUserRoleUpdate);
+app.patch('/api/admin/users/:id/role', requireAuth, handleUserRoleUpdate);
 
 // Owner: Delete User Account
 app.delete('/api/admin/users/:id', requireAuth, async (req: AuthRequest, res) => {

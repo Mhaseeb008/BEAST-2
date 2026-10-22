@@ -114,7 +114,7 @@ export function getStatusConfig(order: Order, formatDate: (d: string) => string)
 }
 
 export const MyOrdersPage: React.FC<MyOrdersPageProps> = ({ setCurrentTab }) => {
-  const { user, token } = useAuth();
+  const { user, token, loading: authLoading } = useAuth();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -211,6 +211,17 @@ export const MyOrdersPage: React.FC<MyOrdersPageProps> = ({ setCurrentTab }) => 
       return [];
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className="max-w-md mx-auto py-24 px-4 text-center space-y-4">
+        <RefreshCw className="w-8 h-8 text-emerald-400 animate-spin mx-auto" />
+        <p className="text-xs text-slate-400 uppercase tracking-widest font-bold">
+          Verifying session & loading orders...
+        </p>
+      </div>
+    );
+  }
 
   // Unauthenticated guard
   if (!user) {
